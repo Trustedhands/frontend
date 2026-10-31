@@ -1,0 +1,24 @@
+{
+  "name": "@trustedhands/session",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "5.105.0",
+    "@trustedhands/api": "workspace:*",
+    "@types/react": "19.3.0",
+    "react": "19.3.1",
+    "typescript": "6.0.3"
+  }
+}

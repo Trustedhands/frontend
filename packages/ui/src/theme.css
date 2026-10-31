@@ -12,6 +12,8 @@
   --color-ink-2: #24406e;
   --color-muted: #5a6478;
   --color-mist: #dce3ee;
+  /* Admin: sidebar profile card */
+  --color-ink-deep: #1b3560;
 
   /* Borders and surfaces */
   --color-line: #e8dfd1;
@@ -19,6 +21,8 @@
   --color-divider: #f1ebe1;
   --color-sand: #f3ede3;
   --color-sand-2: #efe9df;
+  /* Admin: table headers, quoted text */
+  --color-paper: #f7f2ea;
   --color-dash: #c9bba5;
   --color-ring-off: #d5c9b6;
 
@@ -40,6 +44,7 @@
   --color-warn-ink: #6b4100;
   --color-danger: #b42318;
   --color-danger-bg: #fdecea;
+  --color-danger-ink: #8c1c13;
 }
 
 @layer base {
