@@ -96,7 +96,6 @@ The ops team's console (`apps/admin`). The nine screens of the admin design map 
 | `/settings` | Fees, release window, matching priority, service types, MoMo switch, team & invitations |
 
 - **Who sees what.** The API's `/v1/admin/me` returns the staff member's permissions. The sidebar and each action are hidden without the matching permission, and the API enforces the same rules. Accounts without a staff role are signed out at login.
-- **Four eyes on workers.** The admin who adds a worker can't verify them; the console shows a note instead of the decision panel.
 - **Files.** Worker documents, ticket attachments and the CSV export need the bearer token, so they're fetched with it and shown through object URLs (`src/lib/files.ts`).
 - **First admin.** Register through the client app, then run `pnpm admin:promote <email>` in the backend. Invite everyone else from Settings & team.
 

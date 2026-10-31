@@ -9,7 +9,7 @@ export default function NewWorkerPage() {
       <PageHeader
         back={{ href: '/workers', label: 'Workers' }}
         title="Add a worker"
-        subtitle="Fill in what the worker shared with you. A second admin verifies them before they can be assigned."
+        subtitle="Fill in what the worker shared with you. They can be assigned once verified."
       />
       <WorkerForm />
     </>

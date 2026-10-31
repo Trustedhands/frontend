@@ -502,7 +502,6 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Must be a different admin from the one who added the worker */
         post: operations["AdminWorkersController_verify"];
         delete?: never;
         options?: never;
@@ -1440,8 +1439,6 @@ export interface components {
             hasPhoto: boolean;
             ratingAverage: number | null;
             completedJobs: number;
-            /** @description The admin who added the worker; they can't verify them */
-            createdById: string | null;
             createdByName: string | null;
             /** Format: date-time */
             createdAt: string;
@@ -1516,8 +1513,6 @@ export interface components {
             hasPhoto: boolean;
             ratingAverage: number | null;
             completedJobs: number;
-            /** @description The admin who added the worker; they can't verify them */
-            createdById: string | null;
             createdByName: string | null;
             /** Format: date-time */
             createdAt: string;

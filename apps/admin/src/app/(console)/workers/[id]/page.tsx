@@ -18,7 +18,7 @@ import { ErrorNote, PageHeader, Panel, PanelTitle, Table, Td, Th } from '@/compo
 import { api, unwrap } from '@/lib/api';
 import { useAuthedFile } from '@/lib/files';
 import { LANGUAGE_LABELS, WORKER_STATUS } from '@/lib/labels';
-import { useCan, useStaff } from '@/lib/staff';
+import { useCan } from '@/lib/staff';
 
 type CheckKey = 'fullName' | 'dateOfBirth' | 'idNumber' | 'photo' | 'reference';
 
@@ -291,7 +291,6 @@ const CHECKS: Array<{ key: CheckKey; label: string }> = [
 ];
 
 function Decision({ worker }: { worker: WorkerDetail }) {
-  const me = useStaff();
   const can = useCan();
   const [checks, setChecks] = useState<Partial<Record<CheckKey, boolean>>>({});
   const [comment, setComment] = useState('');
@@ -372,17 +371,6 @@ function Decision({ worker }: { worker: WorkerDetail }) {
       </Panel>
     );
   }
-  if (worker.createdById === me.id) {
-    return (
-      <Panel>
-        <PanelTitle>Awaiting verification</PanelTitle>
-        <p className="m-0 text-sm text-muted">
-          You added this worker, so a different admin must verify them.
-        </p>
-      </Panel>
-    );
-  }
-
   const allChecked = CHECKS.every((c) => checks[c.key]);
   const error = verify.error ?? decline.error;
   return (
