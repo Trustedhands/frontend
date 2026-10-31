@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 const config: NextConfig = {
   // Workspace packages ship TypeScript source
-  transpilePackages: ['@trustedhands/ui', '@trustedhands/api'],
+  transpilePackages: ['@trustedhands/ui', '@trustedhands/api', '@trustedhands/session'],
   async headers() {
     return [
       {

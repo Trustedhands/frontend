@@ -502,7 +502,6 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Must be a different admin from the one who added the worker */
         post: operations["AdminWorkersController_verify"];
         delete?: never;
         options?: never;
@@ -2604,7 +2603,10 @@ export interface operations {
     };
     AuthController_register: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2627,7 +2629,10 @@ export interface operations {
     };
     AuthController_login: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2650,7 +2655,10 @@ export interface operations {
     };
     AuthController_refresh: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2669,7 +2677,10 @@ export interface operations {
     };
     AuthController_logout: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2686,7 +2697,10 @@ export interface operations {
     };
     AuthController_forgotPassword: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2707,7 +2721,10 @@ export interface operations {
     };
     AuthController_resetPassword: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2730,7 +2747,10 @@ export interface operations {
     };
     AuthController_changePassword: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2753,7 +2773,10 @@ export interface operations {
     };
     AuthController_sendEmailCode: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2770,7 +2793,10 @@ export interface operations {
     };
     AuthController_verifyEmail: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2791,7 +2817,10 @@ export interface operations {
     };
     AuthController_sendPhoneCode: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2812,7 +2841,10 @@ export interface operations {
     };
     AuthController_verifyPhone: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Which app's refresh cookie to use (default client) */
+                app?: "client" | "admin";
+            };
             header?: never;
             path?: never;
             cookie?: never;
