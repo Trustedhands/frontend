@@ -1,0 +1,17 @@
+{
+  "name": "trustedhands-frontend",
+  "private": true,
+  "packageManager": "pnpm@11.4.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "dev:client": "pnpm --filter @trustedhands/client dev",
+    "build": "pnpm --filter \"./apps/*\" build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "api:generate": "pnpm --filter @trustedhands/api generate",
+    "format": "prettier --write \"apps/*/src/**/*.{ts,tsx,css}\" \"packages/*/src/**/*.{ts,tsx,css}\""
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

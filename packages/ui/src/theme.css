@@ -1,0 +1,72 @@
+/*
+ * TrustedHands design tokens, taken from the MVP design.
+ * Import after `@import "tailwindcss"`; the app supplies the font variables
+ * (--font-bricolage, --font-dm-sans) via next/font.
+ */
+@theme {
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+
+  --color-canvas: #fbf6ee;
+  --color-ink: #13294b;
+  --color-ink-2: #24406e;
+  --color-muted: #5a6478;
+  --color-mist: #dce3ee;
+
+  /* Borders and surfaces */
+  --color-line: #e8dfd1;
+  --color-field: #e0d6c6;
+  --color-divider: #f1ebe1;
+  --color-sand: #f3ede3;
+  --color-sand-2: #efe9df;
+  --color-dash: #c9bba5;
+  --color-ring-off: #d5c9b6;
+
+  /* Brand */
+  --color-brand: #e8641b;
+  --color-brand-soft: #f59a5b;
+  --color-cta: #c2410c;
+  --color-cta-hover: #9a3412;
+  --color-peach: #fdebdd;
+  --color-peach-line: #f6cfb3;
+  --color-sky: #e7edf6;
+
+  /* Status */
+  --color-success: #1d7a4a;
+  --color-success-bg: #e3f3e9;
+  --color-success-ink: #14532d;
+  --color-warn: #8a5300;
+  --color-warn-bg: #fbf0d6;
+  --color-warn-ink: #6b4100;
+  --color-danger: #b42318;
+  --color-danger-bg: #fdecea;
+}
+
+@layer base {
+  html {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--color-canvas);
+  }
+  a {
+    color: var(--color-cta);
+  }
+  a:hover {
+    color: var(--color-cta-hover);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
+}
