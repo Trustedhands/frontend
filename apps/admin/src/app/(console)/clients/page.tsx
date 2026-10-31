@@ -3,25 +3,18 @@
 import { Badge, Button, Input, Spinner } from '@trustedhands/ui';
 import { formatShortDate } from '@trustedhands/ui/format';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useState } from 'react';
 import { Empty, ErrorNote, PageHeader, Panel, Table, Td, Th } from '@/components/page';
 import { api, unwrap } from '@/lib/api';
+import { useDebounced } from '@/lib/use-debounced';
 
 const PAGE_SIZE = 25;
 
 export default function ClientsPage() {
-  const router = useRouter();
   const [text, setText] = useState('');
-  const [q, setQ] = useState('');
+  const q = useDebounced(text.trim());
   const [page, setPage] = useState(1);
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setQ(text.trim());
-      setPage(1);
-    }, 250);
-    return () => clearTimeout(t);
-  }, [text]);
 
   const clients = useQuery({
     queryKey: ['admin', 'clients', q, page],
@@ -44,7 +37,10 @@ export default function ClientsPage() {
       <Input
         type="search"
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          setPage(1);
+        }}
         placeholder="Search name, email, phone or company"
         aria-label="Search clients"
         className="h-11 max-w-md rounded-[10px] text-sm"
@@ -69,26 +65,15 @@ export default function ClientsPage() {
             </thead>
             <tbody>
               {clients.data.items.map((c) => (
-                <tr
-                  key={c.id}
-                  className="cursor-pointer hover:bg-paper/60"
-                  onClick={() => router.push(`/clients/${c.id}`)}
-                >
+                <tr key={c.id} className="hover:bg-paper/60">
                   <Td>
-                    <a
-                      href={`/clients/${c.id}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        router.push(`/clients/${c.id}`);
-                      }}
-                      className="font-bold text-ink no-underline"
-                    >
+                    <Link href={`/clients/${c.id}`} className="font-bold text-ink">
                       {c.companyName ?? c.fullName}
-                    </a>
+                    </Link>
                     {c.companyName && <div className="text-[13px] text-muted">{c.fullName}</div>}
                   </Td>
                   <Td>
-                    <div>{c.email}</div>
+                    <div className="break-all">{c.email}</div>
                     <div className="text-[13px] text-muted">{c.phone ?? 'No phone'}</div>
                   </Td>
                   <Td>{c.accountType === 'COMPANY' ? 'Company' : 'Individual'}</Td>

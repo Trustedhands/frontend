@@ -20,7 +20,8 @@ const COLUMNS: Record<PipelineColumn['key'], { name: string; hint: string }> = {
 
 export default function RequestsPage() {
   const [category, setCategory] = useState('');
-  const [days, setDays] = useState('7');
+  // Any date by default, so nothing waiting on ops is hidden
+  const [days, setDays] = useState('');
   const services = useQuery({
     queryKey: ['admin', 'service-types'],
     queryFn: () => unwrap(api.GET('/v1/admin/settings/service-types')),
@@ -63,13 +64,13 @@ export default function RequestsPage() {
             <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
               Date
               <Select
-                className="h-[42px] min-w-[150px] rounded-[10px] text-sm"
+                className="h-[42px] min-w-[200px] rounded-[10px] text-sm"
                 value={days}
                 onChange={(e) => setDays(e.target.value)}
               >
-                <option value="7">Next 7 days</option>
-                <option value="30">Next 30 days</option>
                 <option value="">Any date</option>
+                <option value="7">Within 7 days of today</option>
+                <option value="30">Within 30 days of today</option>
               </Select>
             </label>
           </>
@@ -79,7 +80,7 @@ export default function RequestsPage() {
       {!pipeline.data ? (
         <Spinner />
       ) : (
-        <div className="overflow-x-auto pb-2">
+        <div className="relative overflow-x-auto pb-2">
           <div className="grid grid-cols-[repeat(5,minmax(210px,1fr))] items-start gap-3.5">
             {pipeline.data.columns.map((col) => (
               <section
@@ -94,6 +95,11 @@ export default function RequestsPage() {
                   </span>
                 </div>
                 <span className="px-1 text-xs text-muted">{COLUMNS[col.key].hint}</span>
+                {col.cards.length === 0 && (
+                  <span className="rounded-xl border border-dashed border-dash px-3 py-4 text-center text-xs text-muted">
+                    Nothing here
+                  </span>
+                )}
                 {col.cards.map((c) => {
                   const tag = workerTag(c);
                   return (
@@ -105,7 +111,7 @@ export default function RequestsPage() {
                       <span className="text-xs text-muted">
                         #{c.reference} · {c.categoryLabel}
                       </span>
-                      <span className="text-[15px] font-bold">{requestTitle(c)}</span>
+                      <span className="text-[15px] font-bold break-words">{requestTitle(c)}</span>
                       <span className="text-[13px] text-muted">{clientName(c)}</span>
                       <span className="flex items-center gap-1.5 text-[13px]">
                         <CalendarClock size={14} aria-hidden="true" />

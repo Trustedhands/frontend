@@ -1,7 +1,7 @@
 'use client';
 
 import { Avatar, Badge, buttonClass, Spinner } from '@trustedhands/ui';
-import { formatDay, formatNumber, formatTime, greeting, KIGALI_TZ } from '@trustedhands/ui/format';
+import { formatDay, formatNumber, greeting, KIGALI_TZ } from '@trustedhands/ui/format';
 import type { AdminServiceRequestSummary } from '@trustedhands/api';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
@@ -20,6 +20,7 @@ import { SearchBox } from '@/components/search-box';
 import { dashboardKey } from '@/components/shell';
 import { api, unwrap } from '@/lib/api';
 import { REQUEST_STATUS } from '@/lib/labels';
+import { requestWhen } from '@/lib/requests';
 import { useCan, useStaff } from '@/lib/staff';
 
 const todayLabel = () =>
@@ -29,12 +30,6 @@ const todayLabel = () =>
     day: 'numeric',
     month: 'long',
   }).format(new Date());
-
-/** "Mon 3 Nov, 8:00", or just the date for placements */
-const when = (r: AdminServiceRequestSummary) =>
-  r.kind === 'PLACEMENT'
-    ? `Starts ${formatDay(r.scheduledAt)}`
-    : `${formatDay(r.scheduledAt)}, ${formatTime(r.scheduledAt)}`;
 
 /** What ops should do next for a request in the "needs action" table. */
 function nextAction(r: AdminServiceRequestSummary): string {
@@ -50,6 +45,11 @@ export default function DashboardPage() {
     queryKey: dashboardKey,
     queryFn: () => unwrap(api.GET('/v1/admin/dashboard')),
   });
+  const services = useQuery({
+    queryKey: ['admin', 'service-types'],
+    queryFn: () => unwrap(api.GET('/v1/admin/settings/service-types')),
+  });
+  const serviceLabel = (key: string) => services.data?.find((s) => s.key === key)?.label ?? key;
   const d = dashboard.data;
   const firstName = me.fullName.split(/\s+/)[0];
 
@@ -93,11 +93,13 @@ export default function DashboardPage() {
               noteTone={d.counts.oldestNewWaitingMinutes !== null ? 'brand' : 'muted'}
             />
             <StatCard
+              href="/requests"
               label="Priced — awaiting client"
               value={d.counts.pricedCount}
               note="Quotes sent"
             />
             <StatCard
+              href="/matching"
               label="Paid — confirm worker"
               value={d.counts.paidCount}
               note="Notify client & brief worker"
@@ -118,9 +120,9 @@ export default function DashboardPage() {
 
           <div className="flex flex-wrap items-start gap-5">
             <Panel className="flex-[2_1_560px] gap-0 overflow-hidden p-0">
-              <div className="flex items-center justify-between px-5 py-[18px]">
+              <div className="flex items-center justify-between gap-3 px-5 py-[18px]">
                 <h2 className="m-0 font-display text-xl font-bold">Requests needing action</h2>
-                <Link href="/requests" className="text-sm font-bold">
+                <Link href="/requests" className="text-sm font-bold whitespace-nowrap">
                   Open pipeline
                 </Link>
               </div>
@@ -149,7 +151,7 @@ export default function DashboardPage() {
                           </span>
                         </Td>
                         <Td>{r.client.companyName ?? r.client.fullName}</Td>
-                        <Td className="whitespace-nowrap">{when(r)}</Td>
+                        <Td className="whitespace-nowrap">{requestWhen(r)}</Td>
                         <Td>
                           <Badge tone={REQUEST_STATUS[r.status].tone} className="whitespace-nowrap">
                             {REQUEST_STATUS[r.status].label}
@@ -184,7 +186,7 @@ export default function DashboardPage() {
                         <span className="flex min-w-0 flex-1 flex-col">
                           <span className="text-sm font-bold">{w.fullName}</span>
                           <span className="truncate text-xs text-muted">
-                            {w.categories.join(', ').toLowerCase()} · added by{' '}
+                            {w.categories.map(serviceLabel).join(', ') || 'No services'} · added by{' '}
                             {w.createdByName ?? 'unknown'}, {formatDay(w.createdAt)}
                           </span>
                         </span>
@@ -206,10 +208,7 @@ export default function DashboardPage() {
                     label="Owed to workers"
                     value={`${formatNumber(d.finance.workerWalletsRwf)} RWF`}
                   />
-                  <Row
-                    label="Payouts to process"
-                    value={`${d.finance.workersWithBalance} · ${formatNumber(d.finance.workerWalletsRwf)} RWF`}
-                  />
+                  <Row label="Workers to pay" value={String(d.finance.workersWithBalance)} />
                   <Link href="/payments" className="text-sm font-bold">
                     Go to payments
                   </Link>

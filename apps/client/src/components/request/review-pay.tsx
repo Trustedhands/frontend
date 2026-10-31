@@ -62,6 +62,18 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per status change
   }, [status]);
 
+  // After a reload mid-payment we no longer know the payment id; the API
+  // settles it in the background, so keep re-reading the request until it does
+  const orphanedPending = request.hasPendingPayment && paymentId === null;
+  useEffect(() => {
+    if (!orphanedPending) return;
+    const timer = setInterval(
+      () => void queryClient.invalidateQueries({ queryKey: keys.request(request.id) }),
+      POLL_MS * 2,
+    );
+    return () => clearInterval(timer);
+  }, [orphanedPending, queryClient, request.id]);
+
   const pay = () => {
     if (useSaved && saved) {
       initiate.mutate(saved.msisdn);
@@ -121,6 +133,7 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
             const local = normalizeLocalPhone(number);
             const msisdn = saved?.msisdn ?? (local ? `250${local}` : null);
             if (msisdn) initiate.mutate(msisdn);
+            else void refreshAfterPayment();
           }}
           checking={initiate.isPending || payment.isFetching}
         />

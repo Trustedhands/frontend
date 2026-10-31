@@ -303,14 +303,23 @@ function Withdrawals() {
 
 function ToPayRow({ w, manage }: { w: WorkerBalance; manage: boolean }) {
   const invalidate = useFinanceInvalidate();
+  const [confirming, setConfirming] = useState(false);
   const pay = useMutation({
+    // Pay exactly the amount on screen, even if the balance moved since
     mutationFn: () =>
       unwrap(
         api.POST('/v1/admin/finance/payouts', {
-          body: { workerId: w.workerId, method: w.payoutMethod ?? 'MOMO' },
+          body: {
+            workerId: w.workerId,
+            method: w.payoutMethod ?? 'MOMO',
+            amountRwf: w.balanceRwf,
+          },
         }),
       ),
-    onSuccess: invalidate,
+    onSuccess: async () => {
+      setConfirming(false);
+      await invalidate();
+    },
   });
   return (
     <tr>
@@ -325,10 +334,27 @@ function ToPayRow({ w, manage }: { w: WorkerBalance; manage: boolean }) {
         {pay.error && (
           <div className="mb-1 text-[13px] text-danger">{(pay.error as Error).message}</div>
         )}
-        {manage && w.payoutMethod && (
-          <Button size="sm" loading={pay.isPending} onClick={() => pay.mutate()}>
+        {manage && w.payoutMethod && !confirming && (
+          <Button size="sm" onClick={() => setConfirming(true)}>
             {w.payoutMethod === 'BANK' ? 'Record bank payout' : 'Pay out'}
           </Button>
+        )}
+        {manage && confirming && (
+          <div className="flex flex-col items-end gap-2">
+            <span className="text-[13px] text-muted">
+              {w.payoutMethod === 'BANK'
+                ? `Record ${rwf(w.balanceRwf)} RWF to send by bank?`
+                : `Send ${rwf(w.balanceRwf)} RWF to ${w.destination} now?`}
+            </span>
+            <div className="flex gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" loading={pay.isPending} onClick={() => pay.mutate()}>
+                Confirm
+              </Button>
+            </div>
+          </div>
         )}
       </Td>
     </tr>

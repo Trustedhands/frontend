@@ -39,6 +39,12 @@ export function SuggestedWorkers({
   });
   const toggle = (key: keyof typeof filters) => setFilters((f) => ({ ...f, [key]: !f[key] }));
 
+  const services = useQuery({
+    queryKey: ['admin', 'service-types'],
+    queryFn: () => unwrap(api.GET('/v1/admin/settings/service-types')),
+  });
+  const serviceLabel = (key: string) => services.data?.find((s) => s.key === key)?.label ?? key;
+
   const suggestions = useQuery({
     queryKey: ['admin', 'suggestions', request.id, sort],
     queryFn: () =>
@@ -130,6 +136,7 @@ export function SuggestedWorkers({
               worker={w}
               selected={w.id === selectedId}
               actionLabel={actionLabel}
+              serviceLabel={serviceLabel}
               disabled={disabled}
               onToggle={() => onSelect(w.id === selectedId ? null : w.id)}
             />
@@ -144,19 +151,21 @@ function WorkerRow({
   worker: w,
   selected,
   actionLabel,
+  serviceLabel,
   disabled,
   onToggle,
 }: {
   worker: SuggestedWorker;
   selected: boolean;
   actionLabel: string;
+  serviceLabel: (key: string) => string;
   disabled: boolean;
   onToggle: () => void;
 }) {
   const place = [
     w.sector,
     w.distanceKm !== null ? `${w.distanceKm} km` : null,
-    w.categories.join(', ').toLowerCase(),
+    w.categories.map(serviceLabel).join(', '),
   ]
     .filter(Boolean)
     .join(' · ');
