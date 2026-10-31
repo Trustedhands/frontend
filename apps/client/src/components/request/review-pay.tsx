@@ -156,8 +156,8 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
 
           {failed && (
             <Alert title="Payment didn't go through">
-              {failed.failureReason ?? 'MoMo declined the payment.'} Nothing was charged. Check your
-              balance and try again.
+              {failed.failureReason ?? 'MoMo could not complete the payment.'} Nothing was charged;
+              you can try again.
             </Alert>
           )}
           {initiate.error && <Alert>{initiate.error.message}</Alert>}
