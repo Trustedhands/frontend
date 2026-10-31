@@ -9,7 +9,14 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { DetailList } from '@/components/screen';
 import { api, unwrap } from '@/lib/api';
-import { formatDay, formatHours, formatRwf, formatShortDate, formatTime } from '@/lib/format';
+import {
+  describePlacement,
+  formatDay,
+  formatHours,
+  formatRwf,
+  formatShortDate,
+  formatTime,
+} from '@/lib/format';
 import { listLanguages, RATING_LABELS, REVIEW_TAG_OPTIONS } from '@/lib/labels';
 import { Stars } from '@/components/stars';
 import { keys } from '@/lib/queries';
@@ -45,7 +52,12 @@ export function ConfirmedService({ request }: { request: ServiceRequestDetail })
         <span className="text-sm font-bold">Service details</span>
         <DetailList
           items={[
-            ['Type', `One-time · ${formatHours(request.durationHours)}`],
+            [
+              'Type',
+              request.placement
+                ? `Long-term · ${describePlacement(request.placement)}`
+                : `One-time · ${formatHours(request.durationHours ?? 0)}`,
+            ],
             ['Address', addressLine(request)],
             [
               'Job',
@@ -66,7 +78,11 @@ export function ConfirmedService({ request }: { request: ServiceRequestDetail })
 
 function WorkerPanel({ request }: { request: ServiceRequestDetail }) {
   const worker = request.worker;
-  const when = `${formatDay(request.scheduledAt)} at ${formatTime(request.scheduledAt)}`;
+  const placement = request.kind === 'PLACEMENT';
+  // Placements have a start date, not an arrival time
+  const when = placement
+    ? formatDay(request.scheduledAt)
+    : `${formatDay(request.scheduledAt)} at ${formatTime(request.scheduledAt)}`;
 
   if (!worker) {
     return (
@@ -76,7 +92,8 @@ function WorkerPanel({ request }: { request: ServiceRequestDetail }) {
         </span>
         <span className="font-display text-[21px] font-bold">We're confirming your worker</span>
         <span className="text-sm text-mist">
-          You'll be notified as soon as they're assigned. Your booking is for {when}.
+          You'll be notified as soon as they're assigned.{' '}
+          {placement ? 'They start' : 'Your booking is for'} {when}.
         </span>
       </HeroPanel>
     );
@@ -117,7 +134,9 @@ function WorkerPanel({ request }: { request: ServiceRequestDetail }) {
       {request.status !== 'COMPLETED' && (
         <div className="flex items-center gap-2.5 rounded-xl bg-ink-2 px-3.5 py-3">
           <CalendarClock size={20} aria-hidden="true" />
-          <span className="text-[15px] font-semibold">Arrives {when}</span>
+          <span className="text-[15px] font-semibold">
+            {placement ? 'Starts' : 'Arrives'} {when}
+          </span>
         </div>
       )}
     </HeroPanel>
@@ -132,7 +151,13 @@ const STEPS: Array<{ status: ServiceRequestStatus; label: string }> = [
 ];
 
 function ProgressCard({ request }: { request: ServiceRequestDetail }) {
-  const currentIndex = STEPS.findIndex((s) => s.status === request.status);
+  // A placement goes straight from assigned to started
+  const steps =
+    request.kind === 'PLACEMENT' ? STEPS.filter((st) => st.status !== 'IN_PROGRESS') : STEPS;
+  // If ops marked a placement in progress, it's still waiting to start
+  const status =
+    request.kind === 'PLACEMENT' && request.status === 'IN_PROGRESS' ? 'ASSIGNED' : request.status;
+  const currentIndex = steps.findIndex((s) => s.status === status);
   const reachedAt = (status: ServiceRequestStatus) =>
     [...request.timeline].reverse().find((e) => e.status === status)?.at;
 
@@ -140,7 +165,9 @@ function ProgressCard({ request }: { request: ServiceRequestDetail }) {
     <Card className="gap-0 rounded-[18px]">
       <span className="mb-3 text-sm font-bold">Progress</span>
       <ol className="m-0 flex list-none flex-col gap-3 p-0">
-        {STEPS.map((step, i) => {
+        {steps.map((step, i) => {
+          const label =
+            step.status === 'COMPLETED' && request.kind === 'PLACEMENT' ? 'Started' : step.label;
           const done = i <= currentIndex;
           const next = i === currentIndex + 1;
           const at = reachedAt(step.status);
@@ -162,7 +189,7 @@ function ProgressCard({ request }: { request: ServiceRequestDetail }) {
                 )}
               />
               <span className={cx('flex-1', done && 'font-semibold', next && 'font-bold')}>
-                {step.label}
+                {label}
               </span>
               {done && at && <span className="text-[13px] text-muted">{formatShortDate(at)}</span>}
               {next && <span className="text-[13px] text-muted">Next</span>}
@@ -241,6 +268,7 @@ function YourReview({ request }: { request: ServiceRequestDetail }) {
 }
 
 function MarkAsDone({ request }: { request: ServiceRequestDetail }) {
+  const placement = request.kind === 'PLACEMENT';
   const queryClient = useQueryClient();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
@@ -261,16 +289,22 @@ function MarkAsDone({ request }: { request: ServiceRequestDetail }) {
       {complete.error && <Alert>{complete.error.message}</Alert>}
       {confirming ? (
         <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-white p-4">
-          <span className="text-[15px] font-bold">Is the job finished?</span>
+          <span className="text-[15px] font-bold">
+            {placement
+              ? `Has ${request.worker?.fullName ?? 'your worker'} started?`
+              : 'Is the job finished?'}
+          </span>
           <span className="text-sm text-muted">
-            Only confirm once the work is done to your satisfaction.
+            {placement
+              ? 'Confirm once they have started working for you. Our match fee is then final.'
+              : 'Only confirm once the work is done to your satisfaction.'}
           </span>
           <div className="grid grid-cols-2 gap-2.5">
             <Button variant="outline" size="md" onClick={() => setConfirming(false)}>
               Not yet
             </Button>
             <Button size="md" loading={complete.isPending} onClick={() => complete.mutate()}>
-              Yes, it's done
+              {placement ? "Yes, they've started" : "Yes, it's done"}
             </Button>
           </div>
         </div>
@@ -278,7 +312,7 @@ function MarkAsDone({ request }: { request: ServiceRequestDetail }) {
         <div className="grid grid-cols-2 gap-2.5">
           <HelpButton request={request} />
           <Button size="md" className="h-[50px] rounded-[14px]" onClick={() => setConfirming(true)}>
-            Mark as done
+            {placement ? "They've started" : 'Mark as done'}
           </Button>
         </div>
       )}

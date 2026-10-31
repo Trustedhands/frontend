@@ -1,7 +1,7 @@
 import { Card } from '@trustedhands/ui';
 import type { ServiceRequestDetail } from '@trustedhands/api';
 import { DetailList } from '@/components/screen';
-import { formatWhen } from '@/lib/format';
+import { describePlacement, describeSchedule } from '@/lib/format';
 import { describeWorkerPreference } from '@/lib/labels';
 
 export function addressLine(r: ServiceRequestDetail) {
@@ -18,7 +18,10 @@ export function RequestSummary({ request }: { request: ServiceRequestDetail }) {
       </div>
       <DetailList
         items={[
-          ['When', formatWhen(request.scheduledAt, request.durationHours)],
+          ['When', describeSchedule(request)],
+          ...(request.placement
+            ? ([['Terms', describePlacement(request.placement)]] as Array<[string, string]>)
+            : []),
           ['Where', addressLine(request)],
           ['Worker', describeWorkerPreference(request.preferredGender, request.preferredLanguages)],
           [

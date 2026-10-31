@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Avatar, Badge, cx, StepBar } from '@trustedhands/ui';
 import type { ServiceRequestSummary } from '@trustedhands/api';
-import { formatDay, formatRwf, formatWhen, shortName } from '@/lib/format';
+import { describeSchedule, formatDay, formatRwf, shortName } from '@/lib/format';
 import { STATUS } from '@/lib/labels';
 
 /** Card on "My requests": status, progress bar and what happens next. */
@@ -24,7 +24,7 @@ export function RequestCard({ request }: { request: ServiceRequestSummary }) {
           <span className="text-[13px] text-muted">
             {awaitingPrice
               ? `${request.reference} · Requested ${formatDay(request.createdAt)}`
-              : formatWhen(request.scheduledAt, request.durationHours)}
+              : describeSchedule(request)}
           </span>
         </div>
         <Badge tone={status.tone}>{status.label}</Badge>

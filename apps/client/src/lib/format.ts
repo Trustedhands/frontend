@@ -93,3 +93,28 @@ export function shortName(fullName: string): string {
   const parts = fullName.trim().split(/\s+/);
   return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1]![0]}.` : fullName;
 }
+
+/** "Sat 1 Nov, 8:00 · 3 h" for visits; "Long-term · starts Mon 3 Nov" for placements. */
+export function describeSchedule(r: {
+  kind: 'VISIT' | 'PLACEMENT';
+  scheduledAt: string;
+  durationHours: number | null;
+}): string {
+  return r.kind === 'PLACEMENT' || r.durationHours === null
+    ? `Long-term · starts ${formatDay(r.scheduledAt)}`
+    : formatWhen(r.scheduledAt, r.durationHours);
+}
+
+/** "Live-out · 6 days a week · about 90,000 RWF a month" */
+export function describePlacement(p: {
+  arrangement: 'LIVE_IN' | 'LIVE_OUT';
+  daysPerWeek: number;
+  salaryRwf: number | null;
+}): string {
+  const parts = [
+    p.arrangement === 'LIVE_IN' ? 'Live-in' : 'Live-out',
+    `${p.daysPerWeek} ${p.daysPerWeek === 1 ? 'day' : 'days'} a week`,
+  ];
+  if (p.salaryRwf) parts.push(`about ${formatRwf(p.salaryRwf)} a month`);
+  return parts.join(' · ');
+}

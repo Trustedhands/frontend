@@ -57,6 +57,12 @@ function NewRequestForm() {
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('9:00');
   const [duration, setDuration] = useState(4);
+  // Long-term placements
+  const [arrangement, setArrangement] = useState<'LIVE_OUT' | 'LIVE_IN'>('LIVE_OUT');
+  const [daysPerWeek, setDaysPerWeek] = useState(6);
+  const [salary, setSalary] = useState('');
+  const isPlacement =
+    service?.feeType === 'MATCH' || (service?.feeType === 'EITHER' && kind === 'PLACEMENT');
   const [gender, setGender] = useState<GenderPreference>('ANY');
   const [languages, setLanguages] = useState<Language[]>(me.profile!.preferredLanguages);
   const [useHome, setUseHome] = useState(Boolean(home));
@@ -77,13 +83,18 @@ function NewRequestForm() {
             longitude: home.longitude ?? undefined,
           }
         : { ...otherAddress, street: otherAddress.street.trim() };
-    const scheduledAt = date ? kigaliDateTime(date, startTime) : null;
+    // Placements have a start date; 8:00 keeps it on the right day in Kigali
+    const scheduledAt = date ? kigaliDateTime(date, isPlacement ? '8:00' : startTime) : null;
+    const salaryRwf = salary.trim() ? Number(salary.replace(/[\s,]/g, '')) : undefined;
 
     const next: Record<string, string> = {};
     if (!category) next.category = 'Choose a type of service';
     if (!description.trim()) next.description = 'Tell us what needs doing';
     if (!scheduledAt) next.date = 'Choose a date';
-    else if (new Date(scheduledAt) <= new Date()) next.date = 'Choose a time in the future';
+    else if (new Date(scheduledAt) <= new Date())
+      next.date = isPlacement ? 'Choose a start date in the future' : 'Choose a time in the future';
+    if (isPlacement && salaryRwf !== undefined && (!Number.isInteger(salaryRwf) || salaryRwf <= 0))
+      next.salary = 'Enter a monthly amount in RWF, or leave it blank';
     if (address.street.length < 2) next.street = 'Add a street, house number or landmark';
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -97,7 +108,9 @@ function NewRequestForm() {
             category: category!,
             description: description.trim(),
             scheduledAt: scheduledAt!,
-            durationHours: duration,
+            ...(isPlacement
+              ? { placement: { arrangement, daysPerWeek, salaryRwf } }
+              : { durationHours: duration }),
             preferredGender: gender,
             preferredLanguages: languages,
             address,
@@ -174,8 +187,13 @@ function NewRequestForm() {
         </Field>
 
         <section className="flex flex-col gap-4 rounded-[18px] border border-line bg-white p-4">
-          <span className="text-sm font-bold">When</span>
-          <Field label="Date" small error={errors.date} className="gap-1.5 font-semibold">
+          <span className="text-sm font-bold">{isPlacement ? 'Start date' : 'When'}</span>
+          <Field
+            label={isPlacement ? 'They start on' : 'Date'}
+            small
+            error={errors.date}
+            className="gap-1.5 font-semibold"
+          >
             <Input
               type="date"
               className="h-[46px]"
@@ -185,33 +203,85 @@ function NewRequestForm() {
               aria-invalid={Boolean(errors.date) || undefined}
             />
           </Field>
-          <div className="grid grid-cols-2 gap-2.5">
-            <Field label="Start time" small className="gap-1.5 font-semibold">
-              <Select
-                className="h-[46px]"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              >
-                {START_TIMES.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Duration" small className="gap-1.5 font-semibold">
-              <Select
-                className="h-[46px]"
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-              >
-                {DURATIONS.map((d) => (
-                  <option key={d} value={d}>
-                    {d} {d === 1 ? 'hour' : 'hours'}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
+          {!isPlacement && (
+            <div className="grid grid-cols-2 gap-2.5">
+              <Field label="Start time" small className="gap-1.5 font-semibold">
+                <Select
+                  className="h-[46px]"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                >
+                  {START_TIMES.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Duration" small className="gap-1.5 font-semibold">
+                <Select
+                  className="h-[46px]"
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                >
+                  {DURATIONS.map((d) => (
+                    <option key={d} value={d}>
+                      {d} {d === 1 ? 'hour' : 'hours'}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+          )}
         </section>
+
+        {isPlacement && (
+          <section className="flex flex-col gap-4 rounded-[18px] border border-line bg-white p-4">
+            <span className="text-sm font-bold">Working arrangement</span>
+            <ChipGroup
+              legend="Where will they live?"
+              legendClassName="mb-1.5 text-[13px] text-muted"
+              options={[
+                { value: 'LIVE_OUT' as const, label: 'Live-out' },
+                { value: 'LIVE_IN' as const, label: 'Live-in' },
+              ]}
+              value={arrangement}
+              onChange={setArrangement}
+            />
+            <div className="grid grid-cols-2 gap-2.5">
+              <Field label="Days a week" small className="gap-1.5 font-semibold">
+                <Select
+                  className="h-[46px]"
+                  value={daysPerWeek}
+                  onChange={(e) => setDaysPerWeek(Number(e.target.value))}
+                >
+                  {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+                    <option key={d} value={d}>
+                      {d} {d === 1 ? 'day' : 'days'}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field
+                label="Monthly salary (optional)"
+                small
+                error={errors.salary}
+                className="gap-1.5 font-semibold"
+              >
+                <Input
+                  className="h-[46px]"
+                  inputMode="numeric"
+                  value={salary}
+                  onChange={(e) => setSalary(e.target.value)}
+                  placeholder="e.g. 80,000"
+                  aria-invalid={Boolean(errors.salary) || undefined}
+                />
+              </Field>
+            </div>
+            <span className="text-[13px] leading-[1.4] text-muted">
+              You agree the salary with the worker and pay them directly. It helps us suggest the
+              right people.
+            </span>
+          </section>
+        )}
 
         <section className="flex flex-col gap-3.5 rounded-[18px] border border-line bg-white p-4">
           <span className="text-sm font-bold">Worker preferences</span>

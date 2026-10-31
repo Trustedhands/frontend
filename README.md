@@ -59,6 +59,14 @@ The 14 screens of the MVP design map onto these routes:
 
 The profile's "Personal details", "Verification" and "Notifications" links reuse the sign-up screens with `?edit=1`.
 
+The list of services comes from the API (`GET /v1/service-types`), so ops can add or hide services without a release.
+
+**Long-term services** (house help, or a driver chosen as long-term) change the New request form. It asks for a start date, live-in or live-out, days a week, and an optional monthly salary instead of a time and duration. The rest of the flow adapts too:
+
+- Review & pay shows a one-off **match fee**.
+- The confirmed screen shows **"Starts …"** instead of an arrival time.
+- The client confirms with **"They've started"** rather than "Mark as done".
+
 Not built yet, because the backend endpoints don't exist yet: ID upload, vouchers and the profile photo.
 
 Implementation notes:

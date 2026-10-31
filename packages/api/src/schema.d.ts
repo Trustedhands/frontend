@@ -1611,6 +1611,13 @@ export interface components {
         SetActiveDto: {
             active: boolean;
         };
+        PlacementTermsDto: {
+            /** @enum {string} */
+            arrangement: "LIVE_IN" | "LIVE_OUT";
+            daysPerWeek: number;
+            /** @description Monthly salary the client has in mind (RWF); agreed directly with the worker */
+            salaryRwf?: number;
+        };
         CreateServiceRequestDto: {
             /**
              * @description For services offered both ways (feeType EITHER); otherwise implied by the service
@@ -1628,11 +1635,13 @@ export interface components {
             description: string;
             /**
              * Format: date-time
-             * @description Start date and time (ISO 8601, with offset)
+             * @description Visit start, or placement start date (ISO 8601, with offset)
              */
             scheduledAt: string;
-            /** @description Hours, in half-hour steps */
-            durationHours: number;
+            /** @description Visits: hours, in half-hour steps */
+            durationHours?: number;
+            /** @description Placements: live-in or live-out, days per week, optional salary */
+            placement?: components["schemas"]["PlacementTermsDto"];
             address: components["schemas"]["AddressDto"];
         };
         ServiceAddressView: {
@@ -1674,6 +1683,13 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        PlacementTermsView: {
+            /** @enum {string} */
+            arrangement: "LIVE_IN" | "LIVE_OUT";
+            daysPerWeek: number;
+            /** @description Monthly salary the client has in mind; agreed between them and the worker */
+            salaryRwf: number | null;
+        };
         AssignedWorkerView: {
             languages: ("EN" | "FR" | "RW" | "SW")[];
             id: string;
@@ -1710,9 +1726,15 @@ export interface components {
             /** @description e.g. "Errands & groceries" */
             categoryLabel: string;
             description: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Visit start, or placement start date
+             */
             scheduledAt: string;
-            durationHours: number;
+            /** @description Visits only */
+            durationHours: number | null;
+            /** @description Placements only */
+            placement: components["schemas"]["PlacementTermsView"] | null;
             totalRwf: number | null;
             /** @description Clients only see a worker once confirmed */
             worker: components["schemas"]["AssignedWorkerView"] | null;
@@ -1732,9 +1754,15 @@ export interface components {
             /** @description e.g. "Errands & groceries" */
             categoryLabel: string;
             description: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Visit start, or placement start date
+             */
             scheduledAt: string;
-            durationHours: number;
+            /** @description Visits only */
+            durationHours: number | null;
+            /** @description Placements only */
+            placement: components["schemas"]["PlacementTermsView"] | null;
             totalRwf: number | null;
             /** @description Clients only see a worker once confirmed */
             worker: components["schemas"]["AssignedWorkerView"] | null;
@@ -1771,9 +1799,15 @@ export interface components {
             /** @description e.g. "Errands & groceries" */
             categoryLabel: string;
             description: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Visit start, or placement start date
+             */
             scheduledAt: string;
-            durationHours: number;
+            /** @description Visits only */
+            durationHours: number | null;
+            /** @description Placements only */
+            placement: components["schemas"]["PlacementTermsView"] | null;
             totalRwf: number | null;
             /** @description Clients only see a worker once confirmed */
             worker: components["schemas"]["AssignedWorkerView"] | null;
@@ -1830,9 +1864,15 @@ export interface components {
             /** @description e.g. "Errands & groceries" */
             categoryLabel: string;
             description: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Visit start, or placement start date
+             */
             scheduledAt: string;
-            durationHours: number;
+            /** @description Visits only */
+            durationHours: number | null;
+            /** @description Placements only */
+            placement: components["schemas"]["PlacementTermsView"] | null;
             totalRwf: number | null;
             /** @description Clients only see a worker once confirmed */
             worker: components["schemas"]["AssignedWorkerView"] | null;

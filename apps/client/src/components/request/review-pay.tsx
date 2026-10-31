@@ -86,8 +86,14 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
 
       <Card className="gap-2.5 rounded-[18px]">
         <span className="text-sm font-bold">Price</span>
-        <PriceRow label="Worker fee" value={formatRwf(quote.workerFeeRwf)} />
-        <PriceRow label="Platform service fee" value={formatRwf(quote.serviceFeeRwf)} />
+        {request.kind === 'PLACEMENT' ? (
+          <PriceRow label="Match fee (one-off)" value={formatRwf(quote.serviceFeeRwf)} />
+        ) : (
+          <>
+            <PriceRow label="Worker fee" value={formatRwf(quote.workerFeeRwf)} />
+            <PriceRow label="Platform service fee" value={formatRwf(quote.serviceFeeRwf)} />
+          </>
+        )}
         {quote.discountRwf > 0 && (
           <PriceRow label="Discount" value={`−${formatRwf(quote.discountRwf)}`} />
         )}
@@ -99,7 +105,10 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
           </span>
         </div>
         <span className="text-[13px] text-muted">
-          Charged once when you accept.{quote.note ? ` ${quote.note}` : ''}
+          {request.kind === 'PLACEMENT'
+            ? 'Charged once to match you with a verified worker. Their salary is agreed between you and paid to them directly.'
+            : 'Charged once when you accept.'}
+          {quote.note ? ` ${quote.note}` : ''}
         </span>
       </Card>
 
