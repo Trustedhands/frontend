@@ -1,0 +1,214 @@
+'use client';
+
+import { Alert, Avatar, Button, Card, cx, HeroPanel } from '@trustedhands/ui';
+import type { ServiceRequestDetail, ServiceRequestStatus } from '@trustedhands/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { CalendarClock, Check, ShieldCheck, Star } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { DetailList } from '@/components/screen';
+import { api, unwrap } from '@/lib/api';
+import { formatDay, formatHours, formatRwf, formatShortDate, formatTime } from '@/lib/format';
+import { listLanguages } from '@/lib/labels';
+import { keys } from '@/lib/queries';
+import { addressLine } from './summary';
+
+/** Screen 8: paid request with its worker, details and progress. */
+export function ConfirmedService({ request }: { request: ServiceRequestDetail }) {
+  return (
+    <>
+      {request.payment && (
+        <div className="flex items-center gap-3 rounded-2xl bg-success-bg px-4 py-3.5 text-success-ink">
+          <span className="flex size-9 flex-none items-center justify-center rounded-full bg-success text-white">
+            <Check size={20} aria-hidden="true" />
+          </span>
+          <div className="flex flex-1 flex-col gap-0.5">
+            <span className="text-[15px] font-bold">
+              Paid · {formatRwf(request.payment.amountRwf)}
+            </span>
+            <span className="text-[13px]">Receipt #{request.payment.receiptReference} · MoMo</span>
+          </div>
+          <Link
+            href="/payments"
+            className="py-2.5 text-sm font-bold text-success-ink hover:text-success-ink"
+          >
+            Receipt
+          </Link>
+        </div>
+      )}
+
+      <WorkerPanel request={request} />
+
+      <Card className="rounded-[18px]">
+        <span className="text-sm font-bold">Service details</span>
+        <DetailList
+          items={[
+            ['Type', `One-time · ${formatHours(request.durationHours)}`],
+            ['Address', addressLine(request)],
+            [
+              'Job',
+              <span key="job" className="whitespace-pre-line">
+                {request.description}
+              </span>,
+            ],
+          ]}
+        />
+      </Card>
+
+      <ProgressCard request={request} />
+
+      {(request.status === 'ASSIGNED' || request.status === 'IN_PROGRESS') && (
+        <MarkAsDone request={request} />
+      )}
+    </>
+  );
+}
+
+function WorkerPanel({ request }: { request: ServiceRequestDetail }) {
+  const worker = request.worker;
+  const when = `${formatDay(request.scheduledAt)} at ${formatTime(request.scheduledAt)}`;
+
+  if (!worker) {
+    return (
+      <HeroPanel ringPosition="bottom" className="gap-3">
+        <span className="text-xs font-bold tracking-[0.08em] text-brand-soft uppercase">
+          Your worker
+        </span>
+        <span className="font-display text-[21px] font-bold">We're confirming your worker</span>
+        <span className="text-sm text-mist">
+          You'll be notified as soon as they're assigned. Your booking is for {when}.
+        </span>
+      </HeroPanel>
+    );
+  }
+
+  const stats = [
+    worker.ratingAverage !== null ? `${worker.ratingAverage.toFixed(1)}` : 'New',
+    `${worker.completedJobs} ${worker.completedJobs === 1 ? 'job' : 'jobs'}`,
+    worker.idVerified ? 'ID verified' : null,
+  ].filter(Boolean);
+
+  return (
+    <HeroPanel ringPosition="bottom" className="gap-4">
+      <span className="text-xs font-bold tracking-[0.08em] text-brand-soft uppercase">
+        Your worker
+      </span>
+      <div className="flex items-center gap-3.5">
+        <Avatar
+          name={worker.fullName}
+          size={72}
+          className="border-[3px] border-white font-display font-extrabold"
+        />
+        <div className="flex flex-col gap-1">
+          <span className="font-display text-[21px] font-bold">{worker.fullName}</span>
+          <span className="flex items-center gap-1.5 text-[13px] text-mist">
+            {worker.idVerified ? (
+              <ShieldCheck size={16} aria-hidden="true" />
+            ) : (
+              <Star size={16} aria-hidden="true" />
+            )}
+            {stats.join(' · ')}
+          </span>
+          {worker.languages.length > 0 && (
+            <span className="text-[13px] text-mist">Speaks {listLanguages(worker.languages)}</span>
+          )}
+        </div>
+      </div>
+      {request.status !== 'COMPLETED' && (
+        <div className="flex items-center gap-2.5 rounded-xl bg-ink-2 px-3.5 py-3">
+          <CalendarClock size={20} aria-hidden="true" />
+          <span className="text-[15px] font-semibold">Arrives {when}</span>
+        </div>
+      )}
+    </HeroPanel>
+  );
+}
+
+const STEPS: Array<{ status: ServiceRequestStatus; label: string }> = [
+  { status: 'PAID', label: 'Paid' },
+  { status: 'ASSIGNED', label: 'Worker assigned' },
+  { status: 'IN_PROGRESS', label: 'In progress' },
+  { status: 'COMPLETED', label: 'Completed' },
+];
+
+function ProgressCard({ request }: { request: ServiceRequestDetail }) {
+  const currentIndex = STEPS.findIndex((s) => s.status === request.status);
+  const reachedAt = (status: ServiceRequestStatus) =>
+    [...request.timeline].reverse().find((e) => e.status === status)?.at;
+
+  return (
+    <Card className="gap-0 rounded-[18px]">
+      <span className="mb-3 text-sm font-bold">Progress</span>
+      <ol className="m-0 flex list-none flex-col gap-3 p-0">
+        {STEPS.map((step, i) => {
+          const done = i <= currentIndex;
+          const next = i === currentIndex + 1;
+          const at = reachedAt(step.status);
+          return (
+            <li
+              key={step.status}
+              aria-current={i === currentIndex ? 'step' : undefined}
+              className={cx('flex items-center gap-3 text-sm', !done && !next && 'text-muted')}
+            >
+              <span
+                aria-hidden="true"
+                className={cx(
+                  'size-[22px] flex-none rounded-full',
+                  done
+                    ? 'bg-success'
+                    : next
+                      ? 'border-[6px] border-brand'
+                      : 'border-2 border-ring-off',
+                )}
+              />
+              <span className={cx('flex-1', done && 'font-semibold', next && 'font-bold')}>
+                {step.label}
+              </span>
+              {done && at && <span className="text-[13px] text-muted">{formatShortDate(at)}</span>}
+              {next && <span className="text-[13px] text-muted">Next</span>}
+            </li>
+          );
+        })}
+      </ol>
+    </Card>
+  );
+}
+
+function MarkAsDone({ request }: { request: ServiceRequestDetail }) {
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+  const complete = useMutation({
+    mutationFn: () =>
+      unwrap(
+        api.POST('/v1/service-requests/{id}/complete', { params: { path: { id: request.id } } }),
+      ),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(keys.request(request.id), updated);
+      void queryClient.invalidateQueries({ queryKey: ['requests'] });
+    },
+  });
+
+  return (
+    <div className="mt-auto flex flex-col gap-2.5">
+      {complete.error && <Alert>{complete.error.message}</Alert>}
+      {confirming ? (
+        <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-white p-4">
+          <span className="text-[15px] font-bold">Is the job finished?</span>
+          <span className="text-sm text-muted">
+            Only confirm once the work is done to your satisfaction.
+          </span>
+          <div className="grid grid-cols-2 gap-2.5">
+            <Button variant="outline" size="md" onClick={() => setConfirming(false)}>
+              Not yet
+            </Button>
+            <Button size="md" loading={complete.isPending} onClick={() => complete.mutate()}>
+              Yes, it's done
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button onClick={() => setConfirming(true)}>Mark as done</Button>
+      )}
+    </div>
+  );
+}

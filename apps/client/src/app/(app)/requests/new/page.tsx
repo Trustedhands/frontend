@@ -1,0 +1,281 @@
+'use client';
+
+import {
+  Alert,
+  Button,
+  ChipGroup,
+  cx,
+  Field,
+  Input,
+  MultiChipGroup,
+  Select,
+  TextArea,
+} from '@trustedhands/ui';
+import type { GenderPreference, Language, ServiceCategory } from '@trustedhands/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState, type FormEvent } from 'react';
+import { AddressFields, emptyAddress, type AddressValue } from '@/components/address-fields';
+import { FlowScreen, PageHeader } from '@/components/screen';
+import { api, unwrap } from '@/lib/api';
+import { COPY } from '@/lib/copy';
+import { kigaliDateTime, kigaliToday } from '@/lib/format';
+import {
+  CATEGORIES,
+  CATEGORY_LABELS,
+  GENDER_PREFERENCE_OPTIONS,
+  LANGUAGE_OPTIONS,
+} from '@/lib/labels';
+import { keys, useMe } from '@/lib/queries';
+
+/** 6:00 to 19:30 in half hours */
+const START_TIMES = Array.from(
+  { length: 28 },
+  (_, i) => `${6 + Math.floor(i / 2)}:${i % 2 ? '30' : '00'}`,
+);
+/** 1 to 8 hours in half hours */
+const DURATIONS = Array.from({ length: 15 }, (_, i) => 1 + i / 2);
+
+const CATEGORY_OPTIONS = CATEGORIES.map((value) => ({ value, label: CATEGORY_LABELS[value] }));
+
+export default function NewRequestPage() {
+  return (
+    <Suspense>
+      <NewRequestForm />
+    </Suspense>
+  );
+}
+
+function NewRequestForm() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const me = useMe().data!;
+  const preset = useSearchParams().get('category') as ServiceCategory | null;
+  const home = me.homeAddress;
+
+  const [category, setCategory] = useState<ServiceCategory | null>(
+    preset && CATEGORIES.includes(preset) ? preset : null,
+  );
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('9:00');
+  const [duration, setDuration] = useState(4);
+  const [gender, setGender] = useState<GenderPreference>('ANY');
+  const [languages, setLanguages] = useState<Language[]>(me.profile!.preferredLanguages);
+  const [useHome, setUseHome] = useState(Boolean(home));
+  const [otherAddress, setOtherAddress] = useState<AddressValue>(emptyAddress());
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    const address =
+      useHome && home
+        ? {
+            district: home.district,
+            sector: home.sector,
+            street: home.street,
+            latitude: home.latitude ?? undefined,
+            longitude: home.longitude ?? undefined,
+          }
+        : { ...otherAddress, street: otherAddress.street.trim() };
+    const scheduledAt = date ? kigaliDateTime(date, startTime) : null;
+
+    const next: Record<string, string> = {};
+    if (!category) next.category = 'Choose a type of service';
+    if (!description.trim()) next.description = 'Tell us what needs doing';
+    if (!scheduledAt) next.date = 'Choose a date';
+    else if (new Date(scheduledAt) <= new Date()) next.date = 'Choose a time in the future';
+    if (address.street.length < 2) next.street = 'Add a street, house number or landmark';
+    setErrors(next);
+    if (Object.keys(next).length) return;
+
+    setSending(true);
+    setFormError(null);
+    try {
+      const created = await unwrap(
+        api.POST('/v1/service-requests', {
+          body: {
+            category: category!,
+            description: description.trim(),
+            scheduledAt: scheduledAt!,
+            durationHours: duration,
+            preferredGender: gender,
+            preferredLanguages: languages,
+            address,
+          },
+        }),
+      );
+      queryClient.setQueryData(keys.request(created.id), created);
+      await queryClient.invalidateQueries({ queryKey: ['requests'] });
+      router.replace(`/requests/${created.id}`);
+    } catch (err) {
+      setSending(false);
+      setFormError((err as Error).message);
+    }
+  };
+
+  return (
+    <FlowScreen wide>
+      <PageHeader backHref="/" title="New request" />
+      <p className="-mt-2 mb-0 text-[15px] leading-[1.45] text-muted">
+        Tell us what you need. We'll find a verified worker and send you a price to confirm —
+        nothing to pay yet.
+      </p>
+
+      <form onSubmit={submit} noValidate className="flex flex-1 flex-col gap-[22px]">
+        <div className="flex flex-col gap-1.5">
+          <ChipGroup
+            legend="Type of service"
+            legendClassName="mb-2.5 font-bold"
+            options={CATEGORY_OPTIONS}
+            value={category}
+            onChange={setCategory}
+          />
+          {errors.category && (
+            <span role="alert" className="text-[13px] font-medium text-danger">
+              {errors.category}
+            </span>
+          )}
+        </div>
+
+        <Field
+          label={<span className="font-bold">Describe the job</span>}
+          error={errors.description}
+          className="gap-2"
+        >
+          <TextArea
+            rows={4}
+            maxLength={2000}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="e.g. 3-bedroom house, full clean incl. kitchen and 2 bathrooms. Supplies are at home."
+            aria-invalid={Boolean(errors.description) || undefined}
+          />
+        </Field>
+
+        <section className="flex flex-col gap-4 rounded-[18px] border border-line bg-white p-4">
+          <span className="text-sm font-bold">When</span>
+          <Field label="Date" small error={errors.date} className="gap-1.5 font-semibold">
+            <Input
+              type="date"
+              className="h-[46px]"
+              min={kigaliToday()}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              aria-invalid={Boolean(errors.date) || undefined}
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-2.5">
+            <Field label="Start time" small className="gap-1.5 font-semibold">
+              <Select
+                className="h-[46px]"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              >
+                {START_TIMES.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Duration" small className="gap-1.5 font-semibold">
+              <Select
+                className="h-[46px]"
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+              >
+                {DURATIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {d} {d === 1 ? 'hour' : 'hours'}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-3.5 rounded-[18px] border border-line bg-white p-4">
+          <span className="text-sm font-bold">Worker preferences</span>
+          <ChipGroup
+            legend="Gender"
+            legendClassName="mb-1.5 text-[13px] text-muted"
+            options={GENDER_PREFERENCE_OPTIONS}
+            value={gender}
+            onChange={setGender}
+          />
+          <MultiChipGroup
+            legend="Speaks (from your profile)"
+            legendClassName="mb-1.5 text-[13px] text-muted"
+            options={LANGUAGE_OPTIONS}
+            value={languages}
+            onChange={setLanguages}
+          />
+        </section>
+
+        <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+          <legend className="mb-2.5 text-sm font-bold">Service address</legend>
+          {home && (
+            <AddressOption checked={useHome} onSelect={() => setUseHome(true)}>
+              <span className="flex flex-col gap-0.5">
+                <span className="text-[15px] font-bold">My home</span>
+                <span className="text-[13px] text-muted">
+                  {home.street} · {home.sector}, {home.district}
+                </span>
+              </span>
+            </AddressOption>
+          )}
+          <AddressOption checked={!useHome} onSelect={() => setUseHome(false)}>
+            <span className="text-[15px] font-bold">A different address</span>
+          </AddressOption>
+          {!useHome && (
+            <div className="rounded-[14px] border border-line bg-white p-4">
+              <AddressFields
+                value={otherAddress}
+                onChange={setOtherAddress}
+                streetError={errors.street}
+              />
+            </div>
+          )}
+        </fieldset>
+
+        {formError && <Alert>{formError}</Alert>}
+
+        <div className="mt-auto flex flex-col gap-2.5">
+          <Button type="submit" loading={sending}>
+            Send request
+          </Button>
+          <span className="text-center text-[13px] text-muted">{COPY.priceResponse}</span>
+        </div>
+      </form>
+    </FlowScreen>
+  );
+}
+
+function AddressOption({
+  checked,
+  onSelect,
+  children,
+}: {
+  checked: boolean;
+  onSelect: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label
+      className={cx(
+        'flex cursor-pointer items-start gap-3 rounded-[14px] bg-white px-4 py-3.5',
+        checked ? 'border-2 border-ink' : 'border border-field',
+      )}
+    >
+      <input
+        type="radio"
+        name="address"
+        checked={checked}
+        onChange={onSelect}
+        className="m-0 mt-0.5 size-[18px] accent-ink"
+      />
+      {children}
+    </label>
+  );
+}
