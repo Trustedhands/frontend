@@ -11,7 +11,7 @@ import { FlowScreen } from '@/components/screen';
 import { StarPicker } from '@/components/stars';
 import { api, unwrap } from '@/lib/api';
 import { firstName, formatDay } from '@/lib/format';
-import { CATEGORY_LABELS, RATING_LABELS, REVIEW_TAG_OPTIONS } from '@/lib/labels';
+import { RATING_LABELS, REVIEW_TAG_OPTIONS } from '@/lib/labels';
 import { keys, useRequest } from '@/lib/queries';
 
 /** Screen 9: rate the worker after a completed job. */
@@ -84,7 +84,7 @@ export default function ReviewPage() {
           How did {name} do?
         </h1>
         <p className="m-0 text-sm text-muted">
-          {CATEGORY_LABELS[r.category]} · {formatDay(r.scheduledAt)} · Completed
+          {r.categoryLabel} · {formatDay(r.scheduledAt)} · Completed
         </p>
       </div>
 

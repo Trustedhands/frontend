@@ -1,31 +1,23 @@
 'use client';
 
 import { Avatar, Badge, buttonClass, HeroPanel } from '@trustedhands/ui';
-import type { ServiceCategory, ServiceRequestSummary } from '@trustedhands/api';
+import type { ServiceRequestSummary } from '@trustedhands/api';
 import { Download, Plus, X } from 'lucide-react';
 import Link from 'next/link';
-import { CATEGORY_ICONS } from '@/components/category-icon';
+import { categoryIcon } from '@/components/category-icon';
 import { TabScreen } from '@/components/tab-screen';
 import { firstName, formatDay, formatRwf, formatTime, greeting, shortName } from '@/lib/format';
 import { useInstall } from '@/lib/install';
-import { CATEGORY_LABELS, STATUS } from '@/lib/labels';
-import { useMe, useRequests } from '@/lib/queries';
+import { STATUS } from '@/lib/labels';
+import { useMe, useRequests, useServiceTypes } from '@/lib/queries';
 import { useStoredFlag } from '@/lib/storage';
-
-const SHORTCUTS: Array<{ category: ServiceCategory; label: string }> = [
-  { category: 'CLEANING', label: 'Cleaning' },
-  { category: 'COOKING', label: 'Cooking' },
-  { category: 'ERRANDS', label: 'Errands' },
-  { category: 'REPAIRS', label: 'Repairs' },
-  { category: 'DRIVER', label: 'Driver' },
-  { category: 'OTHER', label: 'Something else' },
-];
 
 const INSTALL_DISMISSED = 'th:install-dismissed';
 
 export default function HomePage() {
   const me = useMe().data!;
   const active = useRequests('active');
+  const services = useServiceTypes();
   const priced = active.data?.filter((r) => r.status === 'PRICED') ?? [];
   const upcoming = active.data?.filter((r) => r.status !== 'PRICED') ?? [];
 
@@ -51,8 +43,8 @@ export default function HomePage() {
       </HeroPanel>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-2.5">
-        {SHORTCUTS.map(({ category, label }) => {
-          const Icon = CATEGORY_ICONS[category];
+        {(services.data ?? []).map(({ key: category, label }) => {
+          const Icon = categoryIcon(category);
           return (
             <Link
               key={category}
@@ -121,7 +113,7 @@ function PriceReadyCard({ request }: { request: ServiceRequestSummary }) {
           Price ready
         </span>
         <span className="text-[13px] text-cta-hover">
-          {CATEGORY_LABELS[request.category]} · {formatDay(request.scheduledAt)}
+          {request.categoryLabel} · {formatDay(request.scheduledAt)}
         </span>
       </div>
       <div className="flex items-center justify-between gap-3">
@@ -149,13 +141,13 @@ function UpcomingCard({ request }: { request: ServiceRequestSummary }) {
       ) : (
         <div className="flex size-11 flex-none items-center justify-center rounded-full bg-sky">
           {(() => {
-            const Icon = CATEGORY_ICONS[request.category];
+            const Icon = categoryIcon(request.category);
             return <Icon size={20} aria-hidden="true" />;
           })()}
         </div>
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-[15px] font-bold">{CATEGORY_LABELS[request.category]}</span>
+        <span className="text-[15px] font-bold">{request.categoryLabel}</span>
         <span className="truncate text-[13px] text-muted">
           {formatDay(request.scheduledAt)} · {formatTime(request.scheduledAt)}
           {who}

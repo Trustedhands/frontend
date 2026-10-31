@@ -5,21 +5,8 @@ import type {
   Gender,
   GenderPreference,
   Language,
-  ServiceCategory,
   ServiceRequestStatus,
 } from '@trustedhands/api';
-
-export const CATEGORY_LABELS: Record<ServiceCategory, string> = {
-  CLEANING: 'Cleaning',
-  COOKING: 'Cooking',
-  ERRANDS: 'Errands & groceries',
-  REPAIRS: 'Repairs',
-  LAUNDRY: 'Laundry',
-  DRIVER: 'Driver',
-  OTHER: 'Other',
-};
-
-export const CATEGORIES = Object.keys(CATEGORY_LABELS) as ServiceCategory[];
 
 export const LANGUAGE_LABELS: Record<Language, string> = {
   EN: 'English',

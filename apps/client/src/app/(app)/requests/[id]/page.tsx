@@ -7,7 +7,6 @@ import { ConfirmedService } from '@/components/request/confirmed';
 import { ReviewAndPay } from '@/components/request/review-pay';
 import { FlowScreen, PageHeader } from '@/components/screen';
 import { ApiError } from '@/lib/api';
-import { CATEGORY_LABELS } from '@/lib/labels';
 import { useMe, useRequest } from '@/lib/queries';
 
 export default function RequestPage() {
@@ -38,7 +37,7 @@ export default function RequestPage() {
   }
 
   const r = request.data;
-  const title = r.status === 'PRICED' ? 'Review & pay' : CATEGORY_LABELS[r.category];
+  const title = r.status === 'PRICED' ? 'Review & pay' : r.categoryLabel;
 
   return (
     <FlowScreen wide className="gap-[18px]">

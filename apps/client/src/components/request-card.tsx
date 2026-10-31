@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Avatar, Badge, cx, StepBar } from '@trustedhands/ui';
 import type { ServiceRequestSummary } from '@trustedhands/api';
 import { formatDay, formatRwf, formatWhen, shortName } from '@/lib/format';
-import { CATEGORY_LABELS, STATUS } from '@/lib/labels';
+import { STATUS } from '@/lib/labels';
 
 /** Card on "My requests": status, progress bar and what happens next. */
 export function RequestCard({ request }: { request: ServiceRequestSummary }) {
@@ -20,7 +20,7 @@ export function RequestCard({ request }: { request: ServiceRequestSummary }) {
     >
       <div className="flex items-start justify-between gap-2.5">
         <div className="flex flex-col gap-0.5">
-          <span className="text-base font-bold">{CATEGORY_LABELS[request.category]}</span>
+          <span className="text-base font-bold">{request.categoryLabel}</span>
           <span className="text-[13px] text-muted">
             {awaitingPrice
               ? `${request.reference} · Requested ${formatDay(request.createdAt)}`

@@ -6,7 +6,6 @@ import { ArrowDownLeft, Receipt } from 'lucide-react';
 import { useState } from 'react';
 import { FilterTabs, TabScreen, TabTitle } from '@/components/tab-screen';
 import { formatMonth, formatMonthName, formatNumber, formatShortDate } from '@/lib/format';
-import { CATEGORY_LABELS } from '@/lib/labels';
 import { usePaymentHistory } from '@/lib/queries';
 
 type Filter = 'ALL' | 'PAYMENT' | 'REFUND';
@@ -118,7 +117,7 @@ function TransactionRow({ tx }: { tx: Transaction }) {
         <Icon size={20} aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-[15px] font-bold">{CATEGORY_LABELS[tx.category]}</span>
+        <span className="text-[15px] font-bold">{tx.categoryLabel}</span>
         <span className="truncate text-[13px] text-muted">{meta}</span>
       </span>
       <span className="flex flex-col items-end gap-0.5">

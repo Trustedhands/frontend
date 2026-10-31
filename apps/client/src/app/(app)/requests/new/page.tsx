@@ -11,7 +11,7 @@ import {
   Select,
   TextArea,
 } from '@trustedhands/ui';
-import type { GenderPreference, Language, ServiceCategory } from '@trustedhands/api';
+import type { GenderPreference, Language } from '@trustedhands/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
@@ -20,13 +20,8 @@ import { FlowScreen, PageHeader } from '@/components/screen';
 import { api, unwrap } from '@/lib/api';
 import { COPY } from '@/lib/copy';
 import { kigaliDateTime, kigaliToday } from '@/lib/format';
-import {
-  CATEGORIES,
-  CATEGORY_LABELS,
-  GENDER_PREFERENCE_OPTIONS,
-  LANGUAGE_OPTIONS,
-} from '@/lib/labels';
-import { keys, useMe } from '@/lib/queries';
+import { GENDER_PREFERENCE_OPTIONS, LANGUAGE_OPTIONS } from '@/lib/labels';
+import { keys, useMe, useServiceTypes } from '@/lib/queries';
 
 /** 6:00 to 19:30 in half hours */
 const START_TIMES = Array.from(
@@ -35,8 +30,6 @@ const START_TIMES = Array.from(
 );
 /** 1 to 8 hours in half hours */
 const DURATIONS = Array.from({ length: 15 }, (_, i) => 1 + i / 2);
-
-const CATEGORY_OPTIONS = CATEGORIES.map((value) => ({ value, label: CATEGORY_LABELS[value] }));
 
 export default function NewRequestPage() {
   return (
@@ -50,12 +43,16 @@ function NewRequestForm() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const me = useMe().data!;
-  const preset = useSearchParams().get('category') as ServiceCategory | null;
+  const preset = useSearchParams().get('category');
+  const servicesQuery = useServiceTypes();
+  const services = servicesQuery.data ?? [];
   const home = me.homeAddress;
 
-  const [category, setCategory] = useState<ServiceCategory | null>(
-    preset && CATEGORIES.includes(preset) ? preset : null,
-  );
+  const [picked, setCategory] = useState<string | null>(null);
+  // A shortcut from Home preselects the service, if it's still offered
+  const category = picked ?? (services.some((st) => st.key === preset) ? preset : null);
+  const service = services.find((st) => st.key === category);
+  const [kind, setKind] = useState<'VISIT' | 'PLACEMENT'>('VISIT');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('9:00');
@@ -104,6 +101,8 @@ function NewRequestForm() {
             preferredGender: gender,
             preferredLanguages: languages,
             address,
+            // Only "either" services let the client choose
+            kind: service?.feeType === 'EITHER' ? kind : undefined,
           },
         }),
       );
@@ -129,11 +128,30 @@ function NewRequestForm() {
           <ChipGroup
             legend="Type of service"
             legendClassName="mb-2.5 font-bold"
-            options={CATEGORY_OPTIONS}
+            options={services.map((st) => ({ value: st.key, label: st.label }))}
             value={category}
             onChange={setCategory}
           />
-          {errors.category && (
+          {service?.feeType === 'EITHER' && (
+            <ChipGroup
+              legend="How long do you need them?"
+              legendClassName="mt-3 mb-2 text-[13px] text-muted"
+              options={[
+                { value: 'VISIT' as const, label: 'One-time' },
+                { value: 'PLACEMENT' as const, label: 'Long-term' },
+              ]}
+              value={kind}
+              onChange={setKind}
+            />
+          )}
+          {(service?.feeType === 'MATCH' ||
+            (service?.feeType === 'EITHER' && kind === 'PLACEMENT')) && (
+            <p className="m-0 mt-2 text-[13px] leading-[1.45] text-muted">
+              Long-term: we match you with a verified worker for a one-off match fee. Their pay is
+              agreed between you.
+            </p>
+          )}
+          {errors.category && !category && (
             <span role="alert" className="text-[13px] font-medium text-danger">
               {errors.category}
             </span>
@@ -242,7 +260,7 @@ function NewRequestForm() {
         {formError && <Alert>{formError}</Alert>}
 
         <div className="mt-auto flex flex-col gap-2.5">
-          <Button type="submit" loading={sending}>
+          <Button type="submit" loading={sending || servicesQuery.isPending}>
             Send request
           </Button>
           <span className="text-center text-[13px] text-muted">{COPY.priceResponse}</span>

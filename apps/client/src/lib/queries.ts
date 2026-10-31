@@ -11,6 +11,7 @@ export const keys = {
   request: (id: string) => ['request', id] as const,
   payments: ['payments'] as const,
   tickets: ['tickets'] as const,
+  serviceTypes: ['service-types'] as const,
 };
 
 export function useMe() {
@@ -54,5 +55,14 @@ export function useTickets() {
   return useQuery({
     queryKey: keys.tickets,
     queryFn: () => unwrap(api.GET('/v1/support/tickets')),
+  });
+}
+
+/** Services clients can request, as configured by ops. */
+export function useServiceTypes() {
+  return useQuery({
+    queryKey: keys.serviceTypes,
+    queryFn: () => unwrap(api.GET('/v1/service-types')),
+    staleTime: 10 * 60_000,
   });
 }

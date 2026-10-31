@@ -9,7 +9,7 @@ import { Suspense, useRef, useState } from 'react';
 import { FlowScreen, PageHeader } from '@/components/screen';
 import { api, unwrap } from '@/lib/api';
 import { formatShortDate } from '@/lib/format';
-import { CATEGORY_LABELS, TICKET_STATUS } from '@/lib/labels';
+import { TICKET_STATUS } from '@/lib/labels';
 import { keys, useRequests, useTickets } from '@/lib/queries';
 
 const MAX_FILES = 3;
@@ -98,7 +98,7 @@ function ReportIssue() {
           <option value="">Not about a specific booking</option>
           {requests.map((r) => (
             <option key={r.id} value={r.id}>
-              {CATEGORY_LABELS[r.category]} · {formatShortDate(r.scheduledAt)} · #{r.reference}
+              {r.categoryLabel} · {formatShortDate(r.scheduledAt)} · #{r.reference}
             </option>
           ))}
         </Select>
@@ -186,7 +186,7 @@ function ReportIssue() {
                   #{t.reference} · {t.subject}
                 </span>
                 <span className="text-[13px] text-muted">
-                  {t.serviceRequest ? `${CATEGORY_LABELS[t.serviceRequest.category]} · ` : ''}opened{' '}
+                  {t.serviceRequest ? `${t.serviceRequest.categoryLabel} · ` : ''}opened{' '}
                   {formatShortDate(t.createdAt)}
                 </span>
               </span>

@@ -20,6 +20,185 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/service-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ServiceTypesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Readable by all staff: pricing shows the platform fee */
+        get: operations["AdminSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["AdminSettingsController_update"];
+        trace?: never;
+    };
+    "/v1/admin/settings/service-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminSettingsController_serviceTypes"];
+        put?: never;
+        post: operations["AdminSettingsController_createServiceType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/settings/service-types/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["AdminSettingsController_updateServiceType"];
+        trace?: never;
+    };
+    "/v1/admin/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in staff member and what they may do */
+        get: operations["AdminTeamController_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminTeamController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/team/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminTeamController_invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/team/invitations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["AdminTeamController_revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/team/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["AdminTeamController_update"];
+        trace?: never;
+    };
+    "/v1/team/invitations/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["InvitationsController_preview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/team/invitations/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Creates the staff account and signs in (sets the refresh cookie) */
+        post: operations["InvitationsController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/register": {
         parameters: {
             query?: never;
@@ -257,6 +436,7 @@ export interface paths {
         };
         get: operations["AdminWorkersController_list"];
         put?: never;
+        /** Saved as a draft; upload documents, then submit for verification */
         post: operations["AdminWorkersController_create"];
         delete?: never;
         options?: never;
@@ -278,6 +458,88 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["AdminWorkersController_update"];
+        trace?: never;
+    };
+    "/v1/admin/workers/{id}/documents/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminWorkersController_document"];
+        put?: never;
+        /** PHOTO (JPG/PNG), ID_FRONT or ID_BACK (JPG/PNG/PDF), up to 5 MB; replaces any previous one */
+        post: operations["AdminWorkersController_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/workers/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminWorkersController_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/workers/{id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Must be a different admin from the one who added the worker */
+        post: operations["AdminWorkersController_verify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/workers/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminWorkersController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/workers/{id}/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["AdminWorkersController_setActive"];
         trace?: never;
     };
     "/v1/service-requests": {
@@ -378,6 +640,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/service-requests/pipeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Columns for the request pipeline */
+        get: operations["AdminServiceRequestsController_pipeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/service-requests/{id}": {
         parameters: {
             query?: never;
@@ -386,6 +665,23 @@ export interface paths {
             cookie?: never;
         };
         get: operations["AdminServiceRequestsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/service-requests/{id}/suggested-workers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** "Suggested workers", sorted by the matching priority in Settings */
+        get: operations["AdminServiceRequestsController_suggestions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -403,7 +699,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Send or revise the price */
+        /** Send or revise the price, holding a worker */
         post: operations["AdminServiceRequestsController_price"];
         delete?: never;
         options?: never;
@@ -421,6 +717,23 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["AdminServiceRequestsController_assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/service-requests/{id}/remind": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Email and text the client that their price is waiting (at most hourly) */
+        post: operations["AdminServiceRequestsController_remind"];
         delete?: never;
         options?: never;
         head?: never;
@@ -561,6 +874,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["OperationsController_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["OperationsController_search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["OperationsController_clients"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/clients/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["OperationsController_client"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/support/tickets": {
         parameters: {
             query?: never;
@@ -624,8 +1001,42 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Change status (OPEN → ACTIVE → CLOSED, or reopen) or rename */
+        /** Change status (OPEN → ACTIVE → CLOSED, or reopen), assignee or title */
         patch: operations["AdminSupportController_update"];
+        trace?: never;
+    };
+    "/v1/admin/support/tickets/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Internal note, visible to staff only */
+        post: operations["AdminSupportController_addNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/support/tickets/{id}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** "Send reply": emails the client */
+        post: operations["AdminSupportController_reply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/admin/support/tickets/{id}/attachments/{attachmentId}": {
@@ -648,6 +1059,130 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        PublicServiceTypeView: {
+            /** @enum {string} */
+            feeType: "SERVICE" | "MATCH" | "EITHER";
+            key: string;
+            label: string;
+        };
+        SettingsView: {
+            matchingPriority: ("AVAILABILITY" | "LANGUAGE" | "GENDER" | "RATING" | "DISTANCE")[];
+            /** @description Added to the client price for one-time visits */
+            serviceFeeRwf: number;
+            /** @description One-off fee for long-term placements */
+            matchFeeRwf: number;
+            /** @description Worker share is released this long after the visit if the client hasn't confirmed */
+            releaseAfterHours: number;
+            momoEnabled: boolean;
+            cardEnabled: boolean;
+            clientWalletEnabled: boolean;
+            vouchersEnabled: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        UpdateSettingsDto: {
+            /** @description All five criteria, most important first */
+            matchingPriority?: ("AVAILABILITY" | "LANGUAGE" | "GENDER" | "RATING" | "DISTANCE")[];
+            serviceFeeRwf?: number;
+            matchFeeRwf?: number;
+            releaseAfterHours?: number;
+            momoEnabled?: boolean;
+            cardEnabled?: boolean;
+            clientWalletEnabled?: boolean;
+            vouchersEnabled?: boolean;
+        };
+        ServiceTypeView: {
+            /** @enum {string} */
+            feeType: "SERVICE" | "MATCH" | "EITHER";
+            key: string;
+            label: string;
+            pricingGuide: string | null;
+            visible: boolean;
+            sortOrder: number;
+        };
+        CreateServiceTypeDto: {
+            /** @enum {string} */
+            feeType: "SERVICE" | "MATCH" | "EITHER";
+            /** @description Stable identifier, e.g. GARDENING */
+            key: string;
+            label: string;
+            pricingGuide?: string;
+            visible?: boolean;
+            sortOrder?: number;
+        };
+        UpdateServiceTypeDto: {
+            /** @enum {string} */
+            feeType?: "SERVICE" | "MATCH" | "EITHER";
+            /** @description Stable identifier, e.g. GARDENING */
+            key?: string;
+            label?: string;
+            pricingGuide?: string;
+            visible?: boolean;
+            sortOrder?: number;
+        };
+        StaffMeView: {
+            /** @enum {string} */
+            staffRole: "SUPER_ADMIN" | "VERIFICATION_LEAD" | "FINANCE" | "CUSTOMER_SERVICE";
+            permissions: ("dashboard.view" | "requests.view" | "requests.manage" | "workers.view" | "workers.manage" | "workers.verify" | "clients.view" | "payments.view" | "payments.manage" | "tickets.view" | "tickets.manage" | "reviews.view" | "settings.manage" | "team.manage" | "audit.view")[];
+            id: string;
+            fullName: string;
+            email: string;
+        };
+        StaffMemberView: {
+            /** @enum {string} */
+            staffRole: "SUPER_ADMIN" | "VERIFICATION_LEAD" | "FINANCE" | "CUSTOMER_SERVICE";
+            id: string;
+            fullName: string;
+            email: string;
+            disabled: boolean;
+            /** Format: date-time */
+            lastActiveAt: string | null;
+        };
+        InvitationView: {
+            /** @enum {string} */
+            staffRole: "SUPER_ADMIN" | "VERIFICATION_LEAD" | "FINANCE" | "CUSTOMER_SERVICE";
+            id: string;
+            email: string;
+            invitedBy: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        TeamView: {
+            members: components["schemas"]["StaffMemberView"][];
+            pendingInvitations: components["schemas"]["InvitationView"][];
+        };
+        InviteDto: {
+            /** @enum {string} */
+            staffRole: "SUPER_ADMIN" | "VERIFICATION_LEAD" | "FINANCE" | "CUSTOMER_SERVICE";
+            /** Format: email */
+            email: string;
+        };
+        UpdateStaffDto: {
+            /** @enum {string} */
+            staffRole?: "SUPER_ADMIN" | "VERIFICATION_LEAD" | "FINANCE" | "CUSTOMER_SERVICE";
+            /** @description Remove (true) or restore (false) admin access */
+            disabled?: boolean;
+        };
+        InvitationPreviewView: {
+            /** @enum {string} */
+            staffRole: "SUPER_ADMIN" | "VERIFICATION_LEAD" | "FINANCE" | "CUSTOMER_SERVICE";
+            email: string;
+            invitedBy: string;
+        };
+        AcceptInvitationDto: {
+            token: string;
+            fullName: string;
+            password: string;
+            /** @description Rwandan mobile number */
+            phone: string;
+        };
+        AuthSessionView: {
+            accessToken: string;
+            /** @description Seconds until the access token expires */
+            expiresIn: number;
+        };
         RegisterDto: {
             /** @enum {string} */
             accountType: "INDIVIDUAL" | "COMPANY";
@@ -659,11 +1194,6 @@ export interface components {
             phone: string;
             fullName: string;
             companyName?: string;
-        };
-        AuthSessionView: {
-            accessToken: string;
-            /** @description Seconds until the access token expires */
-            expiresIn: number;
         };
         LoginDto: {
             /** Format: email */
@@ -763,54 +1293,207 @@ export interface components {
             latitude?: number;
             longitude?: number;
         };
-        WorkerView: {
+        WorkerSummaryView: {
+            /** @enum {string} */
+            status: "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "DECLINED";
             /** @enum {string} */
             gender: "FEMALE" | "MALE" | "UNDISCLOSED";
             languages: ("EN" | "FR" | "RW" | "SW")[];
-            categories: ("CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER")[];
             id: string;
             fullName: string;
-            phone: string;
-            idVerified: boolean;
             active: boolean;
-            notes: string | null;
+            categories: string[];
+            phone: string;
+            district: string | null;
+            sector: string | null;
+            hasPhoto: boolean;
             ratingAverage: number | null;
             completedJobs: number;
+            createdByName: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        WorkerDocumentView: {
+            /** @enum {string} */
+            kind: "PHOTO" | "ID_FRONT" | "ID_BACK";
+            filename: string;
+            contentType: string;
+            sizeBytes: number;
+            /** Format: date-time */
+            uploadedAt: string;
+        };
+        ChecklistItemView: {
+            /** @enum {string} */
+            key: "personal" | "contact" | "services" | "identity" | "nextOfKin" | "payout";
+            label: string;
+            done: boolean;
+            missing: string | null;
+        };
+        ActivityView: {
+            id: string;
+            /** @description e.g. worker.created, worker.document_uploaded, worker.verified */
+            action: string;
+            actorName: string;
+            /** Format: date-time */
+            at: string;
+        };
+        WorkerDetailView: {
+            /** @enum {string} */
+            status: "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "DECLINED";
+            /** @enum {string} */
+            gender: "FEMALE" | "MALE" | "UNDISCLOSED";
+            languages: ("EN" | "FR" | "RW" | "SW")[];
+            /** @enum {string|null} */
+            idType: "PASSPORT" | "NATIONAL_ID" | "DRIVING_LICENCE" | null;
+            /** Format: date-time */
+            dateOfBirth: string | null;
+            nationality: string | null;
+            countryOfResidence: string | null;
+            email: string | null;
+            province: string | null;
+            cell: string | null;
+            village: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            experience: string | null;
+            idNumber: string | null;
+            nextOfKinName: string | null;
+            nextOfKinRelation: string | null;
+            nextOfKinPhone: string | null;
+            nextOfKinAddress: string | null;
+            nextOfKinIdNumber: string | null;
+            payoutMsisdn: string | null;
+            payoutBankName: string | null;
+            payoutBankAccount: string | null;
+            notes: string | null;
+            verifiedByName: string | null;
+            /** Format: date-time */
+            verifiedAt: string | null;
+            declineReason: string | null;
+            documents: components["schemas"]["WorkerDocumentView"][];
+            checklist: components["schemas"]["ChecklistItemView"][];
+            activity: components["schemas"]["ActivityView"][];
+            id: string;
+            fullName: string;
+            active: boolean;
+            categories: string[];
+            phone: string;
+            district: string | null;
+            sector: string | null;
+            hasPhoto: boolean;
+            ratingAverage: number | null;
+            completedJobs: number;
+            createdByName: string | null;
             /** Format: date-time */
             createdAt: string;
         };
         CreateWorkerDto: {
             /** @enum {string} */
             gender: "FEMALE" | "MALE" | "UNDISCLOSED";
-            languages: ("EN" | "FR" | "RW" | "SW")[];
-            categories: ("CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER")[];
+            languages?: ("EN" | "FR" | "RW" | "SW")[];
+            /** @enum {string} */
+            idType?: "PASSPORT" | "NATIONAL_ID" | "DRIVING_LICENCE";
             fullName: string;
-            /** @description International format, e.g. +250781234567 */
+            /**
+             * Format: date-time
+             * @description YYYY-MM-DD
+             */
+            dateOfBirth?: string;
+            nationality?: string;
+            countryOfResidence?: string;
+            /** @description Service type keys, e.g. CLEANING */
+            categories?: string[];
+            /** @description Rwandan mobile number */
             phone: string;
-            idVerified?: boolean;
+            email?: string;
+            province?: string;
+            district?: string;
+            sector?: string;
+            cell?: string;
+            village?: string;
+            latitude?: number;
+            longitude?: number;
+            /** @description Experience & references */
+            experience?: string;
+            idNumber?: string;
+            nextOfKinName?: string;
+            /** @description e.g. brother */
+            nextOfKinRelation?: string;
+            nextOfKinPhone?: string;
+            nextOfKinAddress?: string;
+            nextOfKinIdNumber?: string;
+            /** @description Mobile Money number for payouts */
+            payoutMsisdn?: string;
+            payoutBankName?: string;
+            payoutBankAccount?: string;
             notes?: string;
         };
         UpdateWorkerDto: {
             /** @enum {string} */
             gender?: "FEMALE" | "MALE" | "UNDISCLOSED";
             languages?: ("EN" | "FR" | "RW" | "SW")[];
-            categories?: ("CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER")[];
+            /** @enum {string} */
+            idType?: "PASSPORT" | "NATIONAL_ID" | "DRIVING_LICENCE";
             fullName?: string;
-            /** @description International format, e.g. +250781234567 */
+            /**
+             * Format: date-time
+             * @description YYYY-MM-DD
+             */
+            dateOfBirth?: string;
+            nationality?: string;
+            countryOfResidence?: string;
+            /** @description Service type keys, e.g. CLEANING */
+            categories?: string[];
+            /** @description Rwandan mobile number */
             phone?: string;
-            idVerified?: boolean;
+            email?: string;
+            province?: string;
+            district?: string;
+            sector?: string;
+            cell?: string;
+            village?: string;
+            latitude?: number;
+            longitude?: number;
+            /** @description Experience & references */
+            experience?: string;
+            idNumber?: string;
+            nextOfKinName?: string;
+            /** @description e.g. brother */
+            nextOfKinRelation?: string;
+            nextOfKinPhone?: string;
+            nextOfKinAddress?: string;
+            nextOfKinIdNumber?: string;
+            /** @description Mobile Money number for payouts */
+            payoutMsisdn?: string;
+            payoutBankName?: string;
+            payoutBankAccount?: string;
             notes?: string;
-            active?: boolean;
+        };
+        VerifyWorkerDto: {
+            /** @description Every check from "Check against the ID" must be true */
+            checks: Record<string, never>;
+            comment?: string;
+        };
+        DeclineWorkerDto: {
+            reason: string;
+        };
+        SetActiveDto: {
+            active: boolean;
         };
         CreateServiceRequestDto: {
-            /** @enum {string} */
-            category: "CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER";
+            /**
+             * @description For services offered both ways (feeType EITHER); otherwise implied by the service
+             * @enum {string}
+             */
+            kind?: "VISIT" | "PLACEMENT";
             /**
              * @default ANY
              * @enum {string}
              */
             preferredGender: "ANY" | "FEMALE" | "MALE";
             preferredLanguages: ("EN" | "FR" | "RW" | "SW")[];
+            /** @description Service type key from GET /v1/service-types */
+            category: string;
             description: string;
             /**
              * Format: date-time
@@ -870,7 +1553,7 @@ export interface components {
         };
         ServiceRequestDetailView: {
             /** @enum {string} */
-            category: "CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER";
+            kind: "VISIT" | "PLACEMENT";
             /** @enum {string} */
             status: "REQUESTED" | "PRICED" | "ADJUSTMENT_REQUESTED" | "PAID" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
             /** @enum {string} */
@@ -891,28 +1574,38 @@ export interface components {
             id: string;
             /** @description e.g. SR-2048 */
             reference: string;
+            /** @description Service type key, e.g. CLEANING */
+            category: string;
+            /** @description e.g. "Errands & groceries" */
+            categoryLabel: string;
             description: string;
             /** Format: date-time */
             scheduledAt: string;
             durationHours: number;
             totalRwf: number | null;
+            /** @description Clients only see a worker once confirmed */
             worker: components["schemas"]["AssignedWorkerView"] | null;
             /** Format: date-time */
             createdAt: string;
         };
         ServiceRequestSummaryView: {
             /** @enum {string} */
-            category: "CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER";
+            kind: "VISIT" | "PLACEMENT";
             /** @enum {string} */
             status: "REQUESTED" | "PRICED" | "ADJUSTMENT_REQUESTED" | "PAID" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
             id: string;
             /** @description e.g. SR-2048 */
             reference: string;
+            /** @description Service type key, e.g. CLEANING */
+            category: string;
+            /** @description e.g. "Errands & groceries" */
+            categoryLabel: string;
             description: string;
             /** Format: date-time */
             scheduledAt: string;
             durationHours: number;
             totalRwf: number | null;
+            /** @description Clients only see a worker once confirmed */
             worker: components["schemas"]["AssignedWorkerView"] | null;
             /** Format: date-time */
             createdAt: string;
@@ -924,28 +1617,43 @@ export interface components {
             reason: string;
         };
         ClientContactView: {
+            /** @enum {string} */
+            accountType: "INDIVIDUAL" | "COMPANY";
+            /** @enum {string} */
+            kycStatus: "NOT_STARTED" | "PENDING" | "VERIFIED" | "REJECTED";
             id: string;
             fullName: string;
             email: string | null;
             phone: string | null;
+            companyName: string | null;
         };
         AdminServiceRequestSummaryView: {
             /** @enum {string} */
-            category: "CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER";
+            kind: "VISIT" | "PLACEMENT";
             /** @enum {string} */
             status: "REQUESTED" | "PRICED" | "ADJUSTMENT_REQUESTED" | "PAID" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
             id: string;
             /** @description e.g. SR-2048 */
             reference: string;
+            /** @description Service type key, e.g. CLEANING */
+            category: string;
+            /** @description e.g. "Errands & groceries" */
+            categoryLabel: string;
             description: string;
             /** Format: date-time */
             scheduledAt: string;
             durationHours: number;
             totalRwf: number | null;
+            /** @description Clients only see a worker once confirmed */
             worker: components["schemas"]["AssignedWorkerView"] | null;
             /** Format: date-time */
             createdAt: string;
             client: components["schemas"]["ClientContactView"];
+            /**
+             * Format: date-time
+             * @description When the client was last reminded to pay
+             */
+            remindedAt: string | null;
         };
         AdminServiceRequestPage: {
             items: components["schemas"]["AdminServiceRequestSummaryView"][];
@@ -953,9 +1661,19 @@ export interface components {
             page: number;
             pageSize: number;
         };
+        PipelineColumnView: {
+            /** @enum {string} */
+            key: "NEW" | "PRICED" | "PAID" | "SCHEDULED" | "IN_PROGRESS";
+            count: number;
+            /** @description Up to 50 cards, soonest first */
+            cards: components["schemas"]["AdminServiceRequestSummaryView"][];
+        };
+        PipelineView: {
+            columns: components["schemas"]["PipelineColumnView"][];
+        };
         AdminServiceRequestDetailView: {
             /** @enum {string} */
-            category: "CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER";
+            kind: "VISIT" | "PLACEMENT";
             /** @enum {string} */
             status: "REQUESTED" | "PRICED" | "ADJUSTMENT_REQUESTED" | "PAID" | "ASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
             /** @enum {string} */
@@ -976,26 +1694,66 @@ export interface components {
             id: string;
             /** @description e.g. SR-2048 */
             reference: string;
+            /** @description Service type key, e.g. CLEANING */
+            category: string;
+            /** @description e.g. "Errands & groceries" */
+            categoryLabel: string;
             description: string;
             /** Format: date-time */
             scheduledAt: string;
             durationHours: number;
             totalRwf: number | null;
+            /** @description Clients only see a worker once confirmed */
             worker: components["schemas"]["AssignedWorkerView"] | null;
             /** Format: date-time */
             createdAt: string;
             client: components["schemas"]["ClientContactView"];
+            /** Format: date-time */
+            remindedAt: string | null;
             version: number;
         };
+        WorkerConflictView: {
+            /** @description e.g. SR-2041 */
+            reference: string;
+            /** Format: date-time */
+            scheduledAt: string;
+        };
+        SuggestedWorkerView: {
+            languages: ("EN" | "FR" | "RW" | "SW")[];
+            id: string;
+            fullName: string;
+            ratingAverage: number | null;
+            completedJobs: number;
+            categories: string[];
+            district: string | null;
+            sector: string | null;
+            /** @description Straight-line distance; null when either location is unknown */
+            distanceKm: number | null;
+            available: boolean;
+            /** @description The booking that clashes, when not available */
+            conflict: components["schemas"]["WorkerConflictView"] | null;
+            languageMatch: boolean;
+            genderMatch: boolean;
+            /** @description Currently held or confirmed on this request */
+            isAssigned: boolean;
+        };
         PriceDto: {
+            /** @description Worker's share; ignored for placements (match fee only) */
             workerFeeRwf: number;
-            serviceFeeRwf: number;
+            /**
+             * Format: uuid
+             * @description The worker to hold for this job
+             */
+            workerId: string;
             /** @description Shown to the client, e.g. "Groceries paid separately on receipt" */
             note?: string;
         };
         AssignWorkerDto: {
-            /** Format: uuid */
-            workerId: string;
+            /**
+             * Format: uuid
+             * @description Defaults to the held worker
+             */
+            workerId?: string;
         };
         InitiatePaymentDto: {
             /** @description MTN Mobile Money number, e.g. 078 123 4567 */
@@ -1021,10 +1779,11 @@ export interface components {
             /** @enum {string} */
             kind: "PAYMENT" | "REFUND";
             /** @enum {string} */
-            category: "CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER";
-            /** @enum {string} */
             status: "PENDING" | "SUCCESSFUL" | "FAILED" | "CREDITED";
             id: string;
+            /** @description Service type key */
+            category: string;
+            categoryLabel: string;
             serviceRequestReference: string;
             receiptReference: string | null;
             /** @description Always positive; `kind` gives the direction */
@@ -1063,12 +1822,97 @@ export interface components {
             items: components["schemas"]["AdminReviewView"][];
             total: number;
         };
-        TicketRequestView: {
+        DashboardCountsView: {
+            /** @description New and adjustment-requested, to price & match */
+            newCount: number;
+            /** @description Minutes the oldest new request has waited; null when none */
+            oldestNewWaitingMinutes: number | null;
+            pricedCount: number;
+            paidCount: number;
+            servicesToday: number;
+            inProgressNow: number;
+            openTickets: number;
+            activeTickets: number;
+        };
+        WorkerToVerifyView: {
+            id: string;
+            fullName: string;
+            categories: string[];
+            createdByName: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        DashboardView: {
+            counts: components["schemas"]["DashboardCountsView"];
+            needsAction: components["schemas"]["AdminServiceRequestSummaryView"][];
+            workersToVerify: components["schemas"]["WorkerToVerifyView"][];
+        };
+        SearchWorkerView: {
             /** @enum {string} */
-            category: "CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER";
+            status: "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "DECLINED";
+            id: string;
+            fullName: string;
+            phone: string;
+        };
+        SearchClientView: {
+            id: string;
+            fullName: string;
+            email: string;
+            phone: string | null;
+        };
+        SearchResultsView: {
+            requests: components["schemas"]["AdminServiceRequestSummaryView"][];
+            workers: components["schemas"]["SearchWorkerView"][];
+            clients: components["schemas"]["SearchClientView"][];
+        };
+        ClientListItemView: {
+            /** @enum {string} */
+            accountType: "INDIVIDUAL" | "COMPANY";
+            /** @enum {string} */
+            kycStatus: "NOT_STARTED" | "PENDING" | "VERIFIED" | "REJECTED";
+            id: string;
+            fullName: string;
+            email: string;
+            phone: string | null;
+            companyName: string | null;
+            emailVerified: boolean;
+            phoneVerified: boolean;
+            requestCount: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ClientPageView: {
+            items: components["schemas"]["ClientListItemView"][];
+            total: number;
+        };
+        ClientDetailView: {
+            /** @enum {string} */
+            accountType: "INDIVIDUAL" | "COMPANY";
+            /** @enum {string} */
+            kycStatus: "NOT_STARTED" | "PENDING" | "VERIFIED" | "REJECTED";
+            id: string;
+            fullName: string;
+            email: string;
+            phone: string | null;
+            companyName: string | null;
+            emailVerified: boolean;
+            phoneVerified: boolean;
+            requestCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            district: string | null;
+            sector: string | null;
+            street: string | null;
+            recentRequests: components["schemas"]["AdminServiceRequestSummaryView"][];
+            openTicketCount: number;
+        };
+        TicketRequestView: {
             id: string;
             /** @description e.g. SR-2041 */
             reference: string;
+            /** @description Service type key */
+            category: string;
+            categoryLabel: string;
             /** Format: date-time */
             scheduledAt: string;
         };
@@ -1099,6 +1943,17 @@ export interface components {
             email: string;
             phone: string | null;
         };
+        StaffRefView: {
+            id: string;
+            fullName: string;
+        };
+        TicketEntryView: {
+            id: string;
+            author: components["schemas"]["StaffRefView"];
+            body: string;
+            /** Format: date-time */
+            at: string;
+        };
         AdminTicketView: {
             /** @enum {string} */
             status: "OPEN" | "ACTIVE" | "CLOSED";
@@ -1114,6 +1969,11 @@ export interface components {
             /** Format: date-time */
             closedAt: string | null;
             client: components["schemas"]["TicketClientView"];
+            assignedTo: components["schemas"]["StaffRefView"] | null;
+            /** @description Staff-only */
+            notes: components["schemas"]["TicketEntryView"][];
+            /** @description Replies emailed to the client */
+            replies: components["schemas"]["TicketEntryView"][];
         };
         AdminTicketPage: {
             items: components["schemas"]["AdminTicketView"][];
@@ -1122,7 +1982,15 @@ export interface components {
         UpdateTicketDto: {
             /** @enum {string} */
             status?: "OPEN" | "ACTIVE" | "CLOSED";
+            /**
+             * Format: uuid
+             * @description Staff member handling it; null to unassign
+             */
+            assignedToId?: string | null;
             subject?: string;
+        };
+        TicketTextDto: {
+            body: string;
         };
     };
     responses: never;
@@ -1147,6 +2015,285 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ServiceTypesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicServiceTypeView"][];
+                };
+            };
+        };
+    };
+    AdminSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsView"];
+                };
+            };
+        };
+    };
+    AdminSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsView"];
+                };
+            };
+        };
+    };
+    AdminSettingsController_serviceTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceTypeView"][];
+                };
+            };
+        };
+    };
+    AdminSettingsController_createServiceType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateServiceTypeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceTypeView"];
+                };
+            };
+        };
+    };
+    AdminSettingsController_updateServiceType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateServiceTypeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceTypeView"];
+                };
+            };
+        };
+    };
+    AdminTeamController_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMeView"];
+                };
+            };
+        };
+    };
+    AdminTeamController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamView"];
+                };
+            };
+        };
+    };
+    AdminTeamController_invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamView"];
+                };
+            };
+        };
+    };
+    AdminTeamController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamView"];
+                };
+            };
+        };
+    };
+    AdminTeamController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStaffDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamView"];
+                };
+            };
+        };
+    };
+    InvitationsController_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationPreviewView"];
+                };
+            };
+        };
+    };
+    InvitationsController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptInvitationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthSessionView"];
+                };
             };
         };
     };
@@ -1447,7 +2594,11 @@ export interface operations {
     AdminWorkersController_list: {
         parameters: {
             query?: {
-                category?: "CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER";
+                status?: "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "DECLINED";
+                /** @description Service type key */
+                category?: string;
+                /** @description Name or phone */
+                q?: string;
                 /** @description Include deactivated workers */
                 includeInactive?: boolean;
             };
@@ -1462,7 +2613,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkerView"][];
+                    "application/json": components["schemas"]["WorkerSummaryView"][];
                 };
             };
         };
@@ -1485,7 +2636,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkerView"];
+                    "application/json": components["schemas"]["WorkerDetailView"];
                 };
             };
         };
@@ -1506,7 +2657,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkerView"];
+                    "application/json": components["schemas"]["WorkerDetailView"];
                 };
             };
         };
@@ -1531,7 +2682,152 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WorkerView"];
+                    "application/json": components["schemas"]["WorkerDetailView"];
+                };
+            };
+        };
+    };
+    AdminWorkersController_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                kind: "PHOTO" | "ID_FRONT" | "ID_BACK";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminWorkersController_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                kind: "PHOTO" | "ID_FRONT" | "ID_BACK";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDetailView"];
+                };
+            };
+        };
+    };
+    AdminWorkersController_submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDetailView"];
+                };
+            };
+        };
+    };
+    AdminWorkersController_verify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyWorkerDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDetailView"];
+                };
+            };
+        };
+    };
+    AdminWorkersController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclineWorkerDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDetailView"];
+                };
+            };
+        };
+    };
+    AdminWorkersController_setActive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetActiveDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDetailView"];
                 };
             };
         };
@@ -1695,6 +2991,30 @@ export interface operations {
             };
         };
     };
+    AdminServiceRequestsController_pipeline: {
+        parameters: {
+            query?: {
+                /** @description Service type key */
+                category?: string;
+                /** @description Only requests scheduled within this many days (past and future) of today */
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineView"];
+                };
+            };
+        };
+    };
     AdminServiceRequestsController_get: {
         parameters: {
             query?: never;
@@ -1712,6 +3032,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminServiceRequestDetailView"];
+                };
+            };
+        };
+    };
+    AdminServiceRequestsController_suggestions: {
+        parameters: {
+            query?: {
+                sort?: "best" | "rating" | "distance";
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestedWorkerView"][];
                 };
             };
         };
@@ -1755,6 +3098,27 @@ export interface operations {
                 "application/json": components["schemas"]["AssignWorkerDto"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminServiceRequestDetailView"];
+                };
+            };
+        };
+    };
+    AdminServiceRequestsController_remind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
@@ -1948,6 +3312,90 @@ export interface operations {
             };
         };
     };
+    OperationsController_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardView"];
+                };
+            };
+        };
+    };
+    OperationsController_search: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResultsView"];
+                };
+            };
+        };
+    };
+    OperationsController_clients: {
+        parameters: {
+            query: {
+                q?: string;
+                page: number;
+                pageSize: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientPageView"];
+                };
+            };
+        };
+    };
+    OperationsController_client: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientDetailView"];
+                };
+            };
+        };
+    };
     SupportController_list: {
         parameters: {
             query?: never;
@@ -2075,6 +3523,56 @@ export interface operations {
         };
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketView"];
+                };
+            };
+        };
+    };
+    AdminSupportController_addNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketTextDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketView"];
+                };
+            };
+        };
+    };
+    AdminSupportController_reply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketTextDto"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
