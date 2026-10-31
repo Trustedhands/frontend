@@ -19,6 +19,7 @@ const LINKS = [
   { href: '/profile/password', label: 'Change password' },
   { href: '/signup/permissions?edit=1', label: 'Notifications & location' },
   { href: '/install', label: 'Install the app' },
+  { href: '/help', label: 'Help & my tickets' },
 ];
 
 export default function ProfilePage() {

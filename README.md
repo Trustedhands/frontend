@@ -51,13 +51,15 @@ The 14 screens of the MVP design map onto these routes:
 | 5 New request              | `/requests/new`                                 |
 | 6 My requests              | `/requests`                                     |
 | 7 Review & pay, 8 Confirmed | `/requests/[id]` (the view depends on status)   |
+| 9 Rate & feedback          | `/requests/[id]/review`                         |
 | 10 Payments                | `/payments`                                     |
 | 11 Profile                 | `/profile`                                      |
+| 12 Report an issue         | `/help` (`?request=<id>` preselects the booking) |
 | 13 Install                 | `/install`                                      |
 
 The profile's "Personal details", "Verification" and "Notifications" links reuse the sign-up screens with `?edit=1`.
 
-Not built yet, because the backend endpoints don't exist yet: 9 Rate & feedback, 12 Report an issue, ID upload, vouchers and the profile photo.
+Not built yet, because the backend endpoints don't exist yet: ID upload, vouchers and the profile photo.
 
 Implementation notes:
 

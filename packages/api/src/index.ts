@@ -19,6 +19,10 @@ export type Transaction = Schemas['TransactionView'];
 export type Worker = Schemas['WorkerView'];
 export type AdminServiceRequestSummary = Schemas['AdminServiceRequestSummaryView'];
 export type AdminServiceRequestDetail = Schemas['AdminServiceRequestDetailView'];
+export type Review = Schemas['ReviewView'];
+export type ReviewTag = Review['tags'][number];
+export type Ticket = Schemas['TicketView'];
+export type TicketStatus = Ticket['status'];
 
 export type ServiceCategory = ServiceRequestSummary['category'];
 export type ServiceRequestStatus = ServiceRequestSummary['status'];

@@ -1,5 +1,7 @@
 import type { BadgeTone } from '@trustedhands/ui';
 import type {
+  ReviewTag,
+  TicketStatus,
   Gender,
   GenderPreference,
   Language,
@@ -77,4 +79,20 @@ export const STATUS: Record<ServiceRequestStatus, StatusPresentation> = {
   IN_PROGRESS: { label: 'In progress', tone: 'success', progress: 3, barColor: 'bg-success' },
   COMPLETED: { label: 'Done', tone: 'success', progress: 4, barColor: 'bg-success' },
   CANCELLED: { label: 'Cancelled', tone: 'neutral', progress: 0, barColor: 'bg-line' },
+};
+
+export const REVIEW_TAG_OPTIONS: { value: ReviewTag; label: string }[] = [
+  { value: 'ON_TIME', label: 'On time' },
+  { value: 'THOROUGH', label: 'Thorough' },
+  { value: 'FRIENDLY', label: 'Friendly' },
+  { value: 'RESPECTFUL', label: 'Respectful' },
+  { value: 'COMMUNICATED_WELL', label: 'Communicated well' },
+];
+
+export const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'] as const;
+
+export const TICKET_STATUS: Record<TicketStatus, { label: string; tone: BadgeTone }> = {
+  OPEN: { label: 'Received', tone: 'info' },
+  ACTIVE: { label: 'Active', tone: 'brand' },
+  CLOSED: { label: 'Closed', tone: 'neutral' },
 };

@@ -528,6 +528,122 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/service-requests/{id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** "Rate & feedback" on a completed request */
+        post: operations["ReviewsController_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminReviewsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/support/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** "My tickets" */
+        get: operations["SupportController_list"];
+        put?: never;
+        /** "Report an issue" (multipart/form-data) */
+        post: operations["SupportController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/support/tickets/{id}/attachments/{attachmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SupportController_attachment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/support/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminSupportController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/support/tickets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminSupportController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change status (OPEN → ACTIVE → CLOSED, or reopen) or rename */
+        patch: operations["AdminSupportController_update"];
+        trace?: never;
+    };
+    "/v1/admin/support/tickets/{id}/attachments/{attachmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminSupportController_attachment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -736,6 +852,14 @@ export interface components {
             /** Format: date-time */
             completedAt: string | null;
         };
+        ReviewView: {
+            tags: ("ON_TIME" | "THOROUGH" | "FRIENDLY" | "RESPECTFUL" | "COMMUNICATED_WELL")[];
+            id: string;
+            rating: number;
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
         AssignedWorkerView: {
             languages: ("EN" | "FR" | "RW" | "SW")[];
             id: string;
@@ -762,6 +886,8 @@ export interface components {
             payment: components["schemas"]["PaymentBriefView"] | null;
             hasPendingPayment: boolean;
             hasReview: boolean;
+            /** @description The client's review, once submitted */
+            review: components["schemas"]["ReviewView"] | null;
             id: string;
             /** @description e.g. SR-2048 */
             reference: string;
@@ -845,6 +971,8 @@ export interface components {
             payment: components["schemas"]["PaymentBriefView"] | null;
             hasPendingPayment: boolean;
             hasReview: boolean;
+            /** @description The client's review, once submitted */
+            review: components["schemas"]["ReviewView"] | null;
             id: string;
             /** @description e.g. SR-2048 */
             reference: string;
@@ -910,6 +1038,91 @@ export interface components {
             monthPaymentCount: number;
             walletBalanceRwf: number;
             transactions: components["schemas"]["TransactionView"][];
+        };
+        SubmitReviewDto: {
+            /** @description "What stood out?" */
+            tags: ("ON_TIME" | "THOROUGH" | "FRIENDLY" | "RESPECTFUL" | "COMMUNICATED_WELL")[];
+            rating: number;
+            comment?: string;
+        };
+        AdminReviewView: {
+            tags: ("ON_TIME" | "THOROUGH" | "FRIENDLY" | "RESPECTFUL" | "COMMUNICATED_WELL")[];
+            id: string;
+            rating: number;
+            comment: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            serviceRequestId: string;
+            /** @description e.g. SR-2048 */
+            serviceRequestReference: string;
+            workerId: string;
+            workerName: string;
+            clientName: string;
+        };
+        AdminReviewPage: {
+            items: components["schemas"]["AdminReviewView"][];
+            total: number;
+        };
+        TicketRequestView: {
+            /** @enum {string} */
+            category: "CLEANING" | "COOKING" | "ERRANDS" | "REPAIRS" | "LAUNDRY" | "DRIVER" | "OTHER";
+            id: string;
+            /** @description e.g. SR-2041 */
+            reference: string;
+            /** Format: date-time */
+            scheduledAt: string;
+        };
+        TicketAttachmentView: {
+            id: string;
+            filename: string;
+            contentType: string;
+            sizeBytes: number;
+        };
+        TicketView: {
+            /** @enum {string} */
+            status: "OPEN" | "ACTIVE" | "CLOSED";
+            id: string;
+            /** @description e.g. TK-118 */
+            reference: string;
+            subject: string;
+            description: string;
+            serviceRequest: components["schemas"]["TicketRequestView"] | null;
+            attachments: components["schemas"]["TicketAttachmentView"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            closedAt: string | null;
+        };
+        TicketClientView: {
+            id: string;
+            fullName: string;
+            email: string;
+            phone: string | null;
+        };
+        AdminTicketView: {
+            /** @enum {string} */
+            status: "OPEN" | "ACTIVE" | "CLOSED";
+            id: string;
+            /** @description e.g. TK-118 */
+            reference: string;
+            subject: string;
+            description: string;
+            serviceRequest: components["schemas"]["TicketRequestView"] | null;
+            attachments: components["schemas"]["TicketAttachmentView"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            closedAt: string | null;
+            client: components["schemas"]["TicketClientView"];
+        };
+        AdminTicketPage: {
+            items: components["schemas"]["AdminTicketView"][];
+            total: number;
+        };
+        UpdateTicketDto: {
+            /** @enum {string} */
+            status?: "OPEN" | "ACTIVE" | "CLOSED";
+            subject?: string;
         };
     };
     responses: never;
@@ -1682,6 +1895,212 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PaymentView"];
                 };
+            };
+        };
+    };
+    ReviewsController_submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitReviewDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewView"];
+                };
+            };
+        };
+    };
+    AdminReviewsController_list: {
+        parameters: {
+            query: {
+                workerId?: string;
+                /** @description Only ratings at or below this */
+                maxRating?: number;
+                page: number;
+                pageSize: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminReviewPage"];
+                };
+            };
+        };
+    };
+    SupportController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketView"][];
+                };
+            };
+        };
+    };
+    SupportController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    description: string;
+                    /** Format: uuid */
+                    serviceRequestId?: string;
+                    files?: string[];
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketView"];
+                };
+            };
+        };
+    };
+    SupportController_attachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminSupportController_list: {
+        parameters: {
+            query: {
+                status?: "OPEN" | "ACTIVE" | "CLOSED";
+                page: number;
+                pageSize: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketPage"];
+                };
+            };
+        };
+    };
+    AdminSupportController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketView"];
+                };
+            };
+        };
+    };
+    AdminSupportController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTicketDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTicketView"];
+                };
+            };
+        };
+    };
+    AdminSupportController_attachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

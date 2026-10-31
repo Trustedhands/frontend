@@ -1,15 +1,17 @@
 'use client';
 
-import { Alert, Avatar, Button, Card, cx, HeroPanel } from '@trustedhands/ui';
+import { Alert, Avatar, Button, buttonClass, Card, cx, HeroPanel } from '@trustedhands/ui';
 import type { ServiceRequestDetail, ServiceRequestStatus } from '@trustedhands/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, Check, ShieldCheck, Star } from 'lucide-react';
+import { CalendarClock, Check, LifeBuoy, ShieldCheck, Star } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { DetailList } from '@/components/screen';
 import { api, unwrap } from '@/lib/api';
 import { formatDay, formatHours, formatRwf, formatShortDate, formatTime } from '@/lib/format';
-import { listLanguages } from '@/lib/labels';
+import { listLanguages, RATING_LABELS, REVIEW_TAG_OPTIONS } from '@/lib/labels';
+import { Stars } from '@/components/stars';
 import { keys } from '@/lib/queries';
 import { addressLine } from './summary';
 
@@ -57,9 +59,7 @@ export function ConfirmedService({ request }: { request: ServiceRequestDetail })
 
       <ProgressCard request={request} />
 
-      {(request.status === 'ASSIGNED' || request.status === 'IN_PROGRESS') && (
-        <MarkAsDone request={request} />
-      )}
+      <Actions request={request} />
     </>
   );
 }
@@ -174,8 +174,75 @@ function ProgressCard({ request }: { request: ServiceRequestDetail }) {
   );
 }
 
+const helpLink = (request: ServiceRequestDetail) => `/help?request=${request.id}`;
+
+/** Bottom actions: what the client can do at this point. */
+function Actions({ request }: { request: ServiceRequestDetail }) {
+  if (request.status === 'COMPLETED') {
+    return request.review ? (
+      <YourReview request={request} />
+    ) : (
+      <div className="mt-auto grid grid-cols-2 gap-2.5">
+        <HelpButton request={request} />
+        <Link
+          href={`/requests/${request.id}/review`}
+          className={buttonClass('primary', 'md', 'h-[50px] rounded-[14px]')}
+        >
+          Rate &amp; review
+        </Link>
+      </div>
+    );
+  }
+  if (request.status === 'ASSIGNED' || request.status === 'IN_PROGRESS') {
+    return <MarkAsDone request={request} />;
+  }
+  return (
+    <div className="mt-auto">
+      <HelpButton request={request} />
+    </div>
+  );
+}
+
+function HelpButton({ request }: { request: ServiceRequestDetail }) {
+  return (
+    <Link
+      href={helpLink(request)}
+      className={buttonClass('outline', 'md', 'h-[50px] w-full rounded-[14px]')}
+    >
+      <LifeBuoy size={18} aria-hidden="true" />
+      Get help
+    </Link>
+  );
+}
+
+function YourReview({ request }: { request: ServiceRequestDetail }) {
+  const review = request.review!;
+  const tagLabels = REVIEW_TAG_OPTIONS.filter((o) => review.tags.includes(o.value)).map(
+    (o) => o.label,
+  );
+  return (
+    <>
+      <Card className="rounded-[18px]">
+        <span className="text-sm font-bold">Your review</span>
+        <div className="flex items-center gap-2">
+          <Stars rating={review.rating} />
+          <span className="text-sm font-semibold">{RATING_LABELS[review.rating]}</span>
+        </div>
+        {tagLabels.length > 0 && (
+          <span className="text-[13px] text-muted">{tagLabels.join(' · ')}</span>
+        )}
+        {review.comment && <p className="m-0 text-sm leading-[1.45]">“{review.comment}”</p>}
+      </Card>
+      <div className="mt-auto">
+        <HelpButton request={request} />
+      </div>
+    </>
+  );
+}
+
 function MarkAsDone({ request }: { request: ServiceRequestDetail }) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const complete = useMutation({
     mutationFn: () =>
@@ -185,6 +252,7 @@ function MarkAsDone({ request }: { request: ServiceRequestDetail }) {
     onSuccess: (updated) => {
       queryClient.setQueryData(keys.request(request.id), updated);
       void queryClient.invalidateQueries({ queryKey: ['requests'] });
+      router.push(`/requests/${request.id}/review`);
     },
   });
 
@@ -207,7 +275,12 @@ function MarkAsDone({ request }: { request: ServiceRequestDetail }) {
           </div>
         </div>
       ) : (
-        <Button onClick={() => setConfirming(true)}>Mark as done</Button>
+        <div className="grid grid-cols-2 gap-2.5">
+          <HelpButton request={request} />
+          <Button size="md" className="h-[50px] rounded-[14px]" onClick={() => setConfirming(true)}>
+            Mark as done
+          </Button>
+        </div>
       )}
     </div>
   );

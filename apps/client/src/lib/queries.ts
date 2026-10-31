@@ -10,6 +10,7 @@ export const keys = {
   requests: (scope: 'active' | 'past') => ['requests', scope] as const,
   request: (id: string) => ['request', id] as const,
   payments: ['payments'] as const,
+  tickets: ['tickets'] as const,
 };
 
 export function useMe() {
@@ -47,4 +48,11 @@ export function onboardingStep(me: Me): string | null {
   // Registration creates the profile; the home address is step 2
   if (!me.homeAddress) return '/signup/about';
   return null;
+}
+
+export function useTickets() {
+  return useQuery({
+    queryKey: keys.tickets,
+    queryFn: () => unwrap(api.GET('/v1/support/tickets')),
+  });
 }
