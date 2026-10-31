@@ -14,7 +14,7 @@ const STATUS_LABEL: Record<Transaction['status'], string> = {
   SUCCESSFUL: 'Paid',
   PENDING: 'Pending',
   FAILED: 'Failed',
-  CREDITED: 'Refund to wallet',
+  REFUNDED: 'Refunded to MoMo',
 };
 
 export default function PaymentsPage() {
@@ -46,7 +46,7 @@ export default function PaymentsPage() {
     <TabScreen>
       <TabTitle>Payments</TabTitle>
 
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className={walletBalanceRwf > 0 ? 'grid grid-cols-2 gap-2.5' : 'grid gap-2.5'}>
         <div className="flex flex-col gap-1 rounded-2xl bg-ink p-3.5 text-white">
           <span className="text-[13px] text-mist">Spent in {formatMonthName(new Date())}</span>
           <span className="font-display text-[22px] font-extrabold">
@@ -56,15 +56,18 @@ export default function PaymentsPage() {
             RWF · {monthPaymentCount} {monthPaymentCount === 1 ? 'payment' : 'payments'}
           </span>
         </div>
-        <div className="flex flex-col gap-1 rounded-2xl border border-line bg-white p-3.5">
-          <span className="text-[13px] text-muted">Wallet credit</span>
-          <span className="font-display text-[22px] font-extrabold">
-            {formatNumber(walletBalanceRwf)}
-          </span>
-          <span className="text-xs text-muted">
-            RWF{walletBalanceRwf > 0 ? ' · from refunds' : ''}
-          </span>
-        </div>
+        {/* Refunds go back to MoMo; a wallet only appears if credit is ever issued */}
+        {walletBalanceRwf > 0 && (
+          <div className="flex flex-col gap-1 rounded-2xl border border-line bg-white p-3.5">
+            <span className="text-[13px] text-muted">Wallet credit</span>
+            <span className="font-display text-[22px] font-extrabold">
+              {formatNumber(walletBalanceRwf)}
+            </span>
+            <span className="text-xs text-muted">
+              RWF{walletBalanceRwf > 0 ? ' · from refunds' : ''}
+            </span>
+          </div>
+        )}
       </div>
 
       <FilterTabs
@@ -107,7 +110,7 @@ function TransactionRow({ tx }: { tx: Transaction }) {
   const Icon = refund ? ArrowDownLeft : Receipt;
   const meta = [
     formatShortDate(tx.at),
-    refund ? 'Wallet' : 'MoMo',
+    'MoMo',
     tx.receiptReference ? `#${tx.receiptReference}` : tx.serviceRequestReference,
   ].join(' · ');
 
@@ -128,7 +131,7 @@ function TransactionRow({ tx }: { tx: Transaction }) {
           {formatNumber(tx.amountRwf)}
         </span>
         <span className={`text-xs ${tx.status === 'FAILED' ? 'text-danger' : 'text-muted'}`}>
-          {STATUS_LABEL[tx.status]}
+          {refund && tx.status === 'PENDING' ? 'Refund pending' : STATUS_LABEL[tx.status]}
         </span>
       </span>
     </li>

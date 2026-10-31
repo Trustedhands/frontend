@@ -938,6 +938,138 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/finance/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminFinanceController_overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/finance/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminFinanceController_transactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/finance/transactions.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** "Export CSV" */
+        get: operations["AdminFinanceController_transactionsCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/finance/refunds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminFinanceController_refunds"];
+        put?: never;
+        /** "Issue refund": back to the payer's MoMo number */
+        post: operations["AdminFinanceController_refund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/finance/payouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Workers with a balance, and recent payouts */
+        get: operations["AdminFinanceController_payouts"];
+        put?: never;
+        /** "Pay out": MoMo goes out immediately; bank waits for confirmation */
+        post: operations["AdminFinanceController_createPayout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/finance/payouts/{id}/mark-paid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminFinanceController_markPaid"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/finance/payouts/{id}/mark-failed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminFinanceController_markFailed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/finance/workers/{id}/wallet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminFinanceController_wallet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/support/tickets": {
         parameters: {
             query?: never;
@@ -1073,8 +1205,8 @@ export interface components {
             matchFeeRwf: number;
             /** @description Worker share is released this long after the visit if the client hasn't confirmed */
             releaseAfterHours: number;
+            /** @description MTN MoMo is the only payment method; turning it off pauses new payments */
             momoEnabled: boolean;
-            cardEnabled: boolean;
             clientWalletEnabled: boolean;
             vouchersEnabled: boolean;
             /** Format: date-time */
@@ -1087,7 +1219,6 @@ export interface components {
             matchFeeRwf?: number;
             releaseAfterHours?: number;
             momoEnabled?: boolean;
-            cardEnabled?: boolean;
             clientWalletEnabled?: boolean;
             vouchersEnabled?: boolean;
         };
@@ -1778,8 +1909,11 @@ export interface components {
         TransactionView: {
             /** @enum {string} */
             kind: "PAYMENT" | "REFUND";
-            /** @enum {string} */
-            status: "PENDING" | "SUCCESSFUL" | "FAILED" | "CREDITED";
+            /**
+             * @description Refunds go back to the payer's MoMo number: PENDING, then REFUNDED
+             * @enum {string}
+             */
+            status: "PENDING" | "SUCCESSFUL" | "FAILED" | "REFUNDED";
             id: string;
             /** @description Service type key */
             category: string;
@@ -1834,6 +1968,19 @@ export interface components {
             openTickets: number;
             activeTickets: number;
         };
+        FinanceOverviewView: {
+            /** @description Platform wallet: fees earned, less refunds it has borne */
+            platformBalanceRwf: number;
+            /** @description Fees released to the platform this month (Kigali time) */
+            feesThisMonthRwf: number;
+            /** @description Paid by clients, service not yet released */
+            escrowRwf: number;
+            /** @description Owed to workers across all wallets */
+            workerWalletsRwf: number;
+            workersWithBalance: number;
+            payoutsPendingRwf: number;
+            refundsPendingRwf: number;
+        };
         WorkerToVerifyView: {
             id: string;
             fullName: string;
@@ -1844,6 +1991,8 @@ export interface components {
         };
         DashboardView: {
             counts: components["schemas"]["DashboardCountsView"];
+            /** @description "Wallets" card; null for staff without payments access */
+            finance: components["schemas"]["FinanceOverviewView"] | null;
             needsAction: components["schemas"]["AdminServiceRequestSummaryView"][];
             workersToVerify: components["schemas"]["WorkerToVerifyView"][];
         };
@@ -1905,6 +2054,122 @@ export interface components {
             street: string | null;
             recentRequests: components["schemas"]["AdminServiceRequestSummaryView"][];
             openTicketCount: number;
+        };
+        TransactionRowView: {
+            /** @enum {string} */
+            status: "IN_ESCROW" | "SETTLED";
+            paymentId: string;
+            /** @description e.g. RC-10482 */
+            receiptReference: string;
+            /** Format: date-time */
+            paidAt: string;
+            clientName: string;
+            serviceLabel: string;
+            serviceRequestId: string;
+            serviceRequestReference: string;
+            amountRwf: number;
+            /** @description Released to the worker, or what they'll get on release */
+            workerShareRwf: number;
+            feeRwf: number;
+            refundedRwf: number;
+        };
+        TransactionPageView: {
+            items: components["schemas"]["TransactionRowView"][];
+            total: number;
+        };
+        RefundView: {
+            /** @enum {string} */
+            status: "PENDING" | "SUCCESSFUL" | "FAILED";
+            /** @enum {string} */
+            chargedTo: "ESCROW" | "PLATFORM";
+            id: string;
+            paymentId: string;
+            serviceRequestId: string;
+            serviceRequestReference: string;
+            clientName: string;
+            amountRwf: number;
+            reason: string;
+            /** @description e.g. 078 *** 4567 */
+            msisdnMasked: string;
+            failureReason: string | null;
+            ticketId: string | null;
+            issuedByName: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            completedAt: string | null;
+        };
+        IssueRefundDto: {
+            /** Format: uuid */
+            serviceRequestId: string;
+            amountRwf: number;
+            reason: string;
+            /**
+             * Format: uuid
+             * @description The ticket it resolves
+             */
+            ticketId?: string;
+        };
+        WorkerBalanceView: {
+            /** @enum {string|null} */
+            payoutMethod: "MOMO" | "BANK" | null;
+            workerId: string;
+            fullName: string;
+            balanceRwf: number;
+            /** @description e.g. "MoMo · 079 *** 2210" */
+            destination: string | null;
+        };
+        PayoutView: {
+            /** @enum {string} */
+            method: "MOMO" | "BANK";
+            /** @enum {string} */
+            status: "PENDING" | "SUCCESSFUL" | "FAILED";
+            id: string;
+            workerId: string;
+            workerName: string;
+            amountRwf: number;
+            destination: string;
+            initiatedByName: string;
+            manualReference: string | null;
+            failureReason: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            completedAt: string | null;
+        };
+        PayoutsView: {
+            /** @description Workers with money in their wallet */
+            toPay: components["schemas"]["WorkerBalanceView"][];
+            /** @description Most recent first */
+            payouts: components["schemas"]["PayoutView"][];
+        };
+        CreatePayoutDto: {
+            /** @enum {string} */
+            method: "MOMO" | "BANK";
+            /** Format: uuid */
+            workerId: string;
+            /** @description Defaults to the full balance */
+            amountRwf?: number;
+        };
+        MarkPayoutPaidDto: {
+            /** @description Bank transfer reference */
+            reference: string;
+        };
+        FailPayoutDto: {
+            reason: string;
+        };
+        WalletEntryView: {
+            /** @enum {string} */
+            kind: "PAYMENT_RECEIVED" | "RELEASED_TO_WORKER" | "RELEASED_TO_PLATFORM" | "REFUND" | "REFUND_REVERSED" | "PAYOUT" | "PAYOUT_REVERSED";
+            id: string;
+            amountRwf: number;
+            serviceRequestReference: string | null;
+            /** Format: date-time */
+            at: string;
+        };
+        WorkerWalletView: {
+            balanceRwf: number;
+            entries: components["schemas"]["WalletEntryView"][];
         };
         TicketRequestView: {
             id: string;
@@ -3392,6 +3657,221 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClientDetailView"];
+                };
+            };
+        };
+    };
+    AdminFinanceController_overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceOverviewView"];
+                };
+            };
+        };
+    };
+    AdminFinanceController_transactions: {
+        parameters: {
+            query: {
+                page: number;
+                pageSize: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionPageView"];
+                };
+            };
+        };
+    };
+    AdminFinanceController_transactionsCsv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    AdminFinanceController_refunds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefundView"][];
+                };
+            };
+        };
+    };
+    AdminFinanceController_refund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueRefundDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefundView"];
+                };
+            };
+        };
+    };
+    AdminFinanceController_payouts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayoutsView"];
+                };
+            };
+        };
+    };
+    AdminFinanceController_createPayout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePayoutDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayoutView"];
+                };
+            };
+        };
+    };
+    AdminFinanceController_markPaid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkPayoutPaidDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayoutView"];
+                };
+            };
+        };
+    };
+    AdminFinanceController_markFailed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FailPayoutDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayoutView"];
+                };
+            };
+        };
+    };
+    AdminFinanceController_wallet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerWalletView"];
                 };
             };
         };
