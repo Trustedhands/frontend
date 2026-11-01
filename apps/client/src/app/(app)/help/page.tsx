@@ -13,7 +13,8 @@ import { TICKET_STATUS } from '@/lib/labels';
 import { keys, useRequests, useTickets } from '@/lib/queries';
 
 const MAX_FILES = 3;
-const MAX_BYTES = 5 * 1024 * 1024;
+/** For all files together: the API host rejects larger requests */
+const MAX_BYTES = 4 * 1024 * 1024;
 const ACCEPTED = ['image/jpeg', 'image/png', 'application/pdf'];
 
 export default function HelpPage() {
@@ -68,9 +69,11 @@ function ReportIssue() {
     const bad = chosen.find((f) => !ACCEPTED.includes(f.type));
     if (bad) return setFileError(`${bad.name}: attach a JPG, PNG or PDF`);
     const big = chosen.find((f) => f.size > MAX_BYTES);
-    if (big) return setFileError(`${big.name} is over 5 MB`);
+    if (big) return setFileError(`${big.name} is over 4 MB`);
     const next = [...files, ...chosen];
     if (next.length > MAX_FILES) return setFileError(`Attach up to ${MAX_FILES} files`);
+    if (next.reduce((sum, f) => sum + f.size, 0) > MAX_BYTES)
+      return setFileError('Files must add up to under 4 MB');
     setFiles(next);
   };
 
@@ -146,7 +149,7 @@ function ReportIssue() {
             className="flex h-16 items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-field bg-white text-sm font-semibold text-ink"
           >
             <Paperclip size={20} aria-hidden="true" />
-            Add file · JPG, PNG or PDF
+            Add file · JPG, PNG or PDF, up to 4 MB
           </button>
         )}
         <input

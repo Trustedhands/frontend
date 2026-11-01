@@ -38,7 +38,7 @@ const BANKS = [
 ];
 const ACCEPT_IMAGE = 'image/jpeg,image/png';
 const ACCEPT_ID = 'image/jpeg,image/png,application/pdf';
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 4 * 1024 * 1024;
 
 type DocKind = 'PHOTO' | 'ID_FRONT' | 'ID_BACK';
 
@@ -701,7 +701,7 @@ function usePicker(accept: string, onPick: (f: File) => void, onError: (m: strin
         if (!file) return;
         if (!accept.split(',').includes(file.type))
           return onError(`${file.name}: unsupported file type`);
-        if (file.size > MAX_BYTES) return onError(`${file.name} is over 5 MB`);
+        if (file.size > MAX_BYTES) return onError(`${file.name} is over 4 MB`);
         onPick(file);
       }}
     />

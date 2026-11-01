@@ -469,7 +469,7 @@ export interface paths {
         };
         get: operations["AdminWorkersController_document"];
         put?: never;
-        /** PHOTO (JPG/PNG), ID_FRONT or ID_BACK (JPG/PNG/PDF), up to 5 MB; replaces any previous one */
+        /** PHOTO (JPG/PNG), ID_FRONT or ID_BACK (JPG/PNG/PDF), under 4 MB; replaces any previous one */
         post: operations["AdminWorkersController_upload"];
         delete?: never;
         options?: never;
