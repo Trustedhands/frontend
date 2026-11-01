@@ -16,7 +16,7 @@ import type { Gender, Language, WorkerDetail } from '@trustedhands/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Camera, CircleCheck, MapPin, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, unwrap } from '@/lib/api';
 import { uploadWorkerDocument } from '@/lib/files';
 import { LANGUAGE_OPTIONS } from '@/lib/labels';
@@ -38,7 +38,7 @@ const BANKS = [
 ];
 const ACCEPT_IMAGE = 'image/jpeg,image/png';
 const ACCEPT_ID = 'image/jpeg,image/png,application/pdf';
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 4 * 1024 * 1024;
 
 type DocKind = 'PHOTO' | 'ID_FRONT' | 'ID_BACK';
 
@@ -127,8 +127,13 @@ export function WorkerForm({ worker }: { worker?: WorkerDetail }) {
   const [error, setError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
 
+  // Set once the worker exists, so a retry after a failed upload updates it
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState<DocKind[]>([]);
   const hasDoc = (kind: DocKind) =>
-    Boolean(files[kind]) || Boolean(worker?.documents.some((d) => d.kind === kind));
+    Boolean(files[kind]) ||
+    uploaded.includes(kind) ||
+    Boolean(worker?.documents.some((d) => d.kind === kind));
   const needsBack = f.idType !== 'PASSPORT';
   const gps = parseGps(f.gps);
 
@@ -181,7 +186,7 @@ export function WorkerForm({ worker }: { worker?: WorkerDetail }) {
   const canSubmit = !worker || worker.status === 'DRAFT' || worker.status === 'DECLINED';
 
   const body = () => {
-    const opt = (v: string) => (v.trim() ? v.trim() : worker ? '' : undefined);
+    const opt = (v: string) => (v.trim() ? v.trim() : worker || createdId ? '' : undefined);
     return {
       fullName: f.fullName.trim(),
       gender: f.gender,
@@ -219,18 +224,25 @@ export function WorkerForm({ worker }: { worker?: WorkerDetail }) {
     if (f.gps.trim() && !gps) return setError('Location should look like -1.9441, 30.1269');
     setBusy(andSubmit ? 'submit' : 'draft');
     try {
-      // The API takes YYYY-MM-DD as a date
-      const saved = worker
+      // The API takes YYYY-MM-DD as a date. Once created, retries update that
+      // record (e.g. after an upload failed) instead of creating a duplicate.
+      const existingId = worker?.id ?? createdId;
+      const saved = existingId
         ? await unwrap(
             api.PATCH('/v1/admin/workers/{id}', {
-              params: { path: { id: worker.id } },
+              params: { path: { id: existingId } },
               body: body() as never,
             }),
           )
         : await unwrap(api.POST('/v1/admin/workers', { body: body() as never }));
+      setCreatedId(saved.id);
       for (const kind of ['PHOTO', 'ID_FRONT', 'ID_BACK'] as const) {
         const file = files[kind];
-        if (file) await uploadWorkerDocument(saved.id, kind, file);
+        if (!file) continue;
+        await uploadWorkerDocument(saved.id, kind, file);
+        // Uploaded: don't send it again on a retry
+        setFiles((prev) => ({ ...prev, [kind]: undefined }));
+        setUploaded((prev) => [...prev, kind]);
       }
       if (andSubmit)
         await unwrap(
@@ -385,7 +397,7 @@ export function WorkerForm({ worker }: { worker?: WorkerDetail }) {
                   }
                   className="h-11 rounded-[10px] text-sm"
                 >
-                  {KIGALI_DISTRICTS.map((d) => (
+                  {withCurrent(KIGALI_DISTRICTS, f.district).map((d) => (
                     <option key={d}>{d}</option>
                   ))}
                 </Select>
@@ -404,7 +416,7 @@ export function WorkerForm({ worker }: { worker?: WorkerDetail }) {
                   onChange={(e) => set('sector', e.target.value)}
                   className="h-11 rounded-[10px] text-sm"
                 >
-                  {(KIGALI_SECTORS[f.district] ?? []).map((s) => (
+                  {withCurrent(KIGALI_SECTORS[f.district] ?? [], f.sector).map((s) => (
                     <option key={s}>{s}</option>
                   ))}
                 </Select>
@@ -689,7 +701,7 @@ function usePicker(accept: string, onPick: (f: File) => void, onError: (m: strin
         if (!file) return;
         if (!accept.split(',').includes(file.type))
           return onError(`${file.name}: unsupported file type`);
-        if (file.size > MAX_BYTES) return onError(`${file.name} is over 5 MB`);
+        if (file.size > MAX_BYTES) return onError(`${file.name} is over 4 MB`);
         onPick(file);
       }}
     />
@@ -709,7 +721,16 @@ function PhotoPicker({
   onError: (m: string) => void;
 }) {
   const picker = usePicker(ACCEPT_IMAGE, onPick, onError);
-  const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  // A data URL needs no cleanup, unlike an object URL
+  const [loaded, setLoaded] = useState<{ file: File; url: string } | null>(null);
+  useEffect(() => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setLoaded({ file, url: reader.result as string });
+    reader.readAsDataURL(file);
+    return () => reader.abort();
+  }, [file]);
+  const preview = file && loaded?.file === file ? loaded.url : null;
   return (
     <div className="flex items-center gap-4">
       <div className="flex size-20 flex-none items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-brand bg-peach text-cta-hover">
@@ -773,4 +794,9 @@ function DocPicker({
       {picker.input}
     </button>
   );
+}
+
+/** Keeps a saved value selectable even if it isn't in today's list. */
+function withCurrent(options: readonly string[], current: string): readonly string[] {
+  return current && !options.includes(current) ? [current, ...options] : options;
 }

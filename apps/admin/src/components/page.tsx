@@ -40,7 +40,9 @@ export function PageHeader({
         </div>
         {subtitle && <p className="m-0 max-w-3xl text-sm text-muted">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2.5">{actions}</div>}
+      {actions && (
+        <div className="flex w-full flex-wrap items-center gap-2.5 sm:w-auto">{actions}</div>
+      )}
     </header>
   );
 }
@@ -117,7 +119,8 @@ export function StatCard({
 /** Table styled like the design: paper header, divider rows. */
 export function Table({ children, minWidth = 640 }: { children: ReactNode; minWidth?: number }) {
   return (
-    <div className="overflow-x-auto">
+    // relative: keeps absolutely positioned content (e.g. sr-only headers) inside the scroller
+    <div className="relative overflow-x-auto">
       <table className="w-full border-collapse text-sm" style={{ minWidth }}>
         {children}
       </table>
@@ -165,7 +168,7 @@ export function ErrorNote({ error }: { error: unknown }) {
   );
 }
 
-/** Pill tabs (status filters, page sections). */
+/** Pill switcher for status filters and page sections. */
 export function Tabs<T extends string>({
   label,
   value,
@@ -178,19 +181,18 @@ export function Tabs<T extends string>({
   options: Array<{ value: T; label: ReactNode }>;
 }) {
   return (
-    <div role="tablist" aria-label={label} className="flex flex-wrap gap-1.5">
+    <div role="group" aria-label={label} className="flex flex-wrap gap-1.5">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
-          role="tab"
-          aria-selected={value === o.value}
+          aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={cx(
-            'min-h-10 rounded-full px-3.5 text-sm',
+            'min-h-10 rounded-full px-3.5 text-sm whitespace-nowrap',
             value === o.value
-              ? 'border-0 bg-ink font-bold text-white'
-              : 'border border-field bg-white font-semibold text-ink',
+              ? 'border border-ink bg-ink font-bold text-white'
+              : 'border border-field bg-white font-semibold text-ink hover:border-ink',
           )}
         >
           {o.label}

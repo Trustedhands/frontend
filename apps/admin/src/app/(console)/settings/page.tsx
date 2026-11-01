@@ -29,7 +29,8 @@ const settingsKey = ['admin', 'settings'] as const;
 const serviceTypesKey = ['admin', 'service-types'] as const;
 const teamKey = ['admin', 'team'] as const;
 
-const toInt = (s: string) => Number(s.replace(/[\s,]/g, ''));
+const toInt = (s: string) => (s.trim() ? Number(s.replace(/[\s,]/g, '')) : NaN);
+const inRange = (n: number, max: number) => Number.isInteger(n) && n >= 0 && n <= max;
 
 export default function SettingsPage() {
   const can = useCan();
@@ -56,7 +57,6 @@ function PlatformSettings() {
   if (!settings.data) return <Spinner />;
   return (
     <SettingsForm
-      key={settings.data.updatedAt}
       settings={settings.data}
       onSaved={(next) => queryClient.setQueryData(settingsKey, next)}
     />
@@ -94,6 +94,12 @@ function SettingsForm({
       setSaved(true);
     },
   });
+  const errors = {
+    serviceFee: inRange(toInt(serviceFee), 1_000_000) ? null : 'Whole RWF, up to 1,000,000',
+    matchFee: inRange(toInt(matchFee), 10_000_000) ? null : 'Whole RWF, up to 10,000,000',
+    releaseHours: inRange(toInt(releaseHours), 720) ? null : 'Whole hours, 0 to 720',
+  };
+  const valid = !errors.serviceFee && !errors.matchFee && !errors.releaseHours;
   const dirty =
     toInt(serviceFee) !== s.serviceFeeRwf ||
     toInt(matchFee) !== s.matchFeeRwf ||
@@ -123,18 +129,21 @@ function SettingsForm({
             hint="RWF, added to the client price"
             value={serviceFee}
             onChange={edit(setServiceFee)}
+            error={errors.serviceFee}
           />
           <FeeField
             label="Match fee (long-term placement, e.g. house help, driver)"
             hint="RWF, one-off"
             value={matchFee}
             onChange={edit(setMatchFee)}
+            error={errors.matchFee}
           />
           <FeeField
             label="Release worker share"
             hint={`When the client confirms, or ${releaseHours || '…'} h after the visit`}
             value={releaseHours}
             onChange={edit(setReleaseHours)}
+            error={errors.releaseHours}
             suffix="hours"
           />
         </Panel>
@@ -192,7 +201,12 @@ function SettingsForm({
         </Panel>
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <Button size="md" disabled={!dirty} loading={save.isPending} onClick={() => save.mutate()}>
+        <Button
+          size="md"
+          disabled={!dirty || !valid}
+          loading={save.isPending}
+          onClick={() => save.mutate()}
+        >
           Save changes
         </Button>
         {save.error && <ErrorNote error={save.error} />}
@@ -208,26 +222,28 @@ function FeeField({
   hint,
   value,
   onChange,
+  error,
   suffix = 'RWF',
 }: {
   label: string;
   hint: string;
   value: string;
   onChange: (e: { target: { value: string } }) => void;
+  error: string | null;
   suffix?: string;
 }) {
   return (
-    <Field label={label} small className="gap-1.5 font-semibold text-ink">
+    <Field label={label} small error={error} hint={hint} className="gap-1.5 font-semibold text-ink">
       <div className="flex items-center gap-2">
         <Input
           inputMode="numeric"
           value={value}
           onChange={onChange}
+          aria-invalid={Boolean(error)}
           className="h-11 max-w-40 rounded-[10px] text-sm"
         />
         <span className="text-sm text-muted">{suffix}</span>
       </div>
-      <span className="text-[13px] font-normal text-muted">{hint}</span>
     </Field>
   );
 }
@@ -360,7 +376,9 @@ function ServiceTypeRow({
     .trim()
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, '_')
-    .replace(/^_|_$/g, '');
+    .replace(/^_|_$/g, '')
+    .replace(/^(?=[^A-Z])/, 'S_')
+    .slice(0, 40);
   const save = useMutation({
     mutationFn: () =>
       t

@@ -19,7 +19,7 @@ import { AddressFields, emptyAddress, type AddressValue } from '@/components/add
 import { FlowScreen, PageHeader } from '@/components/screen';
 import { api, unwrap } from '@/lib/api';
 import { COPY } from '@/lib/copy';
-import { kigaliDateTime, kigaliToday } from '@/lib/format';
+import { kigaliDateIn, kigaliDateTime, kigaliToday } from '@/lib/format';
 import { GENDER_PREFERENCE_OPTIONS, LANGUAGE_OPTIONS } from '@/lib/labels';
 import { keys, useMe, useServiceTypes } from '@/lib/queries';
 
@@ -93,11 +93,21 @@ function NewRequestForm() {
     if (!scheduledAt) next.date = 'Choose a date';
     else if (new Date(scheduledAt) <= new Date())
       next.date = isPlacement ? 'Choose a start date in the future' : 'Choose a time in the future';
+    else if (new Date(scheduledAt).getTime() > Date.now() + 365 * 864e5)
+      next.date = 'Choose a date within the next year';
     if (isPlacement && salaryRwf !== undefined && (!Number.isInteger(salaryRwf) || salaryRwf <= 0))
       next.salary = 'Enter a monthly amount in RWF, or leave it blank';
     if (address.street.length < 2) next.street = 'Add a street, house number or landmark';
     setErrors(next);
-    if (Object.keys(next).length) return;
+    if (Object.keys(next).length) {
+      // The first problem may be far above the button on a phone
+      requestAnimationFrame(() =>
+        document
+          .querySelector('[role="alert"], [aria-invalid="true"]')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+      );
+      return;
+    }
 
     setSending(true);
     setFormError(null);
@@ -198,6 +208,8 @@ function NewRequestForm() {
               type="date"
               className="h-[46px]"
               min={kigaliToday()}
+              // Requests can be booked up to a year ahead
+              max={kigaliDateIn(364)}
               value={date}
               onChange={(e) => setDate(e.target.value)}
               aria-invalid={Boolean(errors.date) || undefined}

@@ -11,6 +11,7 @@ import {
 import type { AdminServiceRequestDetail } from '@trustedhands/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { UserCheck } from 'lucide-react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { ErrorNote, PageHeader, Panel, PanelTitle } from '@/components/page';
@@ -70,6 +71,12 @@ export default function RequestPage() {
       <div className="flex flex-wrap items-start gap-6">
         <div className="flex min-w-0 flex-[1_1_340px] flex-col gap-[18px]">
           <RequestFacts request={r} />
+          {r.hasPendingPayment && (
+            <Alert tone="warn" title="Client is paying now">
+              A MoMo prompt is waiting on their phone. The price can't change and the request can't
+              be cancelled until it's approved or fails.
+            </Alert>
+          )}
           {(PRICEABLE as readonly string[]).includes(r.status) && (
             <PricePanel request={r} manage={manage} held={held} />
           )}
@@ -134,7 +141,9 @@ function RequestFacts({ request: r }: { request: AdminServiceRequestDetail }) {
       <h2 className="m-0 text-[15px] font-bold">Request</h2>
       <dl className="m-0 grid grid-cols-[110px_1fr] gap-x-3 gap-y-2.5 text-sm">
         <Fact term="Client">
-          {client}
+          <Link href={`/clients/${r.client.id}`} className="text-ink">
+            {client}
+          </Link>
           {r.client.kycStatus === 'VERIFIED' ? ' · verified' : ''}
         </Fact>
         <Fact term="Contact">{[r.client.phone, r.client.email].filter(Boolean).join(' · ')}</Fact>
@@ -170,7 +179,7 @@ function Fact({ term, children }: { term: string; children: ReactNode }) {
   return (
     <>
       <dt className="text-muted">{term}</dt>
-      <dd className="m-0 font-semibold">{children}</dd>
+      <dd className="m-0 min-w-0 font-semibold break-words">{children}</dd>
     </>
   );
 }
@@ -192,7 +201,9 @@ function PricePanel({
   const placement = r.kind === 'PLACEMENT';
   const [fee, setFee] = useState(r.quote && !placement ? String(r.quote.workerFeeRwf) : '');
   const [note, setNote] = useState(r.quote?.note ?? '');
-  const workerFee = placement ? 0 : Number(fee.replace(/[\s,]/g, '')) || 0;
+  const feeNumber = Number(fee.replace(/[\s,]/g, ''));
+  const feeValid = Number.isInteger(feeNumber) && feeNumber > 0;
+  const workerFee = placement || !feeValid ? 0 : feeNumber;
   const platformFee = settings.data
     ? placement
       ? settings.data.matchFeeRwf
@@ -216,7 +227,7 @@ function PricePanel({
       ),
     onSuccess: invalidate,
   });
-  const ready = Boolean(held) && (placement || workerFee > 0);
+  const ready = Boolean(held) && (placement || feeValid) && !r.hasPendingPayment;
   const repricing = r.status === 'PRICED';
 
   return (
@@ -236,8 +247,14 @@ function PricePanel({
               onChange={(e) => setFee(e.target.value)}
               disabled={!manage}
               placeholder="e.g. 15,000"
+              aria-invalid={fee.trim() !== '' && !feeValid}
               className="h-12 border-ink text-lg font-bold"
             />
+            {fee.trim() !== '' && !feeValid && (
+              <span className="text-[13px] font-medium text-danger">
+                Enter a whole amount in RWF
+              </span>
+            )}
           </Field>
           <Row
             label="Platform fee (from settings)"
@@ -393,7 +410,7 @@ function ProgressPanel({ request: r }: { request: AdminServiceRequestDetail }) {
         they don’t, it closes automatically after the release window and the worker is paid.
       </p>
       {(start.error || complete.error) && <ErrorNote error={start.error ?? complete.error} />}
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5">
         {r.status === 'ASSIGNED' && r.kind === 'VISIT' && (
           <Button
             variant="outline"
@@ -404,12 +421,7 @@ function ProgressPanel({ request: r }: { request: AdminServiceRequestDetail }) {
             Mark in progress
           </Button>
         )}
-        <Button
-          size="md"
-          loading={complete.isPending}
-          onClick={() => complete.mutate()}
-          className="col-span-1"
-        >
+        <Button size="md" loading={complete.isPending} onClick={() => complete.mutate()}>
           {r.kind === 'PLACEMENT' ? 'Mark as started' : 'Mark as done'}
         </Button>
       </div>
@@ -436,7 +448,8 @@ function CancelPanel({ request: r }: { request: AdminServiceRequestDetail }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="self-start bg-transparent p-0 text-sm font-bold text-danger"
+        disabled={r.hasPendingPayment}
+        className="self-start bg-transparent p-0 text-sm font-bold text-danger disabled:cursor-not-allowed disabled:opacity-50"
       >
         Cancel this request
       </button>
@@ -447,7 +460,8 @@ function CancelPanel({ request: r }: { request: AdminServiceRequestDetail }) {
       <h2 className="m-0 text-[15px] font-bold">Cancel request</h2>
       {r.payment && (
         <Alert tone="warn">
-          The client has paid. Cancelling doesn’t refund them; issue the refund separately.
+          The client has paid. Cancelling doesn’t refund them; issue the refund separately. Anything
+          not refunded within the release window (Settings) goes to the platform wallet.
         </Alert>
       )}
       <Field label="Reason (shown to the client)" small className="gap-1.5 font-semibold">
@@ -478,7 +492,9 @@ function AssignedWorker({ request: r }: { request: AdminServiceRequestDetail }) 
       <PanelTitle>Worker</PanelTitle>
       {r.worker ? (
         <div className="flex flex-col gap-1">
-          <span className="text-base font-bold">{r.worker.fullName}</span>
+          <Link href={`/workers/${r.worker.id}`} className="text-base font-bold text-ink">
+            {r.worker.fullName}
+          </Link>
           <span className="text-[13px] text-muted">
             {r.worker.ratingAverage !== null ? `${r.worker.ratingAverage.toFixed(1)} · ` : ''}
             {r.worker.completedJobs} jobs · {r.worker.idVerified ? 'ID verified' : 'not verified'}

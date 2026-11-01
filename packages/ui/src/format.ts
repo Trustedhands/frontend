@@ -79,6 +79,11 @@ export function kigaliToday(now = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: KIGALI_TZ }).format(now);
 }
 
+/** The Kigali calendar date `days` from now, as YYYY-MM-DD (date input bounds). */
+export function kigaliDateIn(days: number, now = new Date()): string {
+  return kigaliToday(new Date(now.getTime() + days * 864e5));
+}
+
 /** "2026-11-01" + "8:30" → ISO timestamp at that Kigali wall-clock time. */
 export function kigaliDateTime(date: string, time: string): string {
   const [h, m] = time.split(':');

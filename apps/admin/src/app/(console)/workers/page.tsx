@@ -1,15 +1,16 @@
 'use client';
 
-import { Avatar, Badge, buttonClass, Input, Spinner, cx } from '@trustedhands/ui';
+import { Avatar, Badge, buttonClass, Input, Spinner } from '@trustedhands/ui';
 import type { WorkerStatus } from '@trustedhands/api';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Empty, ErrorNote, PageHeader } from '@/components/page';
+import { Empty, ErrorNote, PageHeader, Tabs } from '@/components/page';
 import { api, unwrap } from '@/lib/api';
 import { WORKER_STATUS } from '@/lib/labels';
 import { useCan } from '@/lib/staff';
+import { useDebounced } from '@/lib/use-debounced';
 
 const FILTERS: Array<{ value: WorkerStatus | ''; label: string }> = [
   { value: '', label: 'All' },
@@ -23,20 +24,22 @@ export default function WorkersPage() {
   const can = useCan();
   const [status, setStatus] = useState<WorkerStatus | ''>('');
   const [q, setQ] = useState('');
+  const search = useDebounced(q.trim());
   const services = useQuery({
     queryKey: ['admin', 'service-types'],
     queryFn: () => unwrap(api.GET('/v1/admin/settings/service-types')),
   });
   const workers = useQuery({
-    queryKey: ['admin', 'workers', status, q],
+    queryKey: ['admin', 'workers', status, search],
     queryFn: () =>
       unwrap(
         api.GET('/v1/admin/workers', {
           params: {
-            query: { status: status || undefined, q: q.trim() || undefined, includeInactive: true },
+            query: { status: status || undefined, q: search || undefined, includeInactive: true },
           },
         }),
       ),
+    placeholderData: keepPreviousData,
   });
   const label = (key: string) => services.data?.find((s) => s.key === key)?.label ?? key;
 
@@ -55,27 +58,10 @@ export default function WorkersPage() {
         }
       />
       <div className="flex flex-wrap items-center gap-3">
-        <div role="tablist" aria-label="Worker status" className="flex flex-wrap gap-1.5">
-          {FILTERS.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              role="tab"
-              aria-selected={status === f.value}
-              onClick={() => setStatus(f.value)}
-              className={cx(
-                'min-h-10 rounded-full px-3.5 text-sm',
-                status === f.value
-                  ? 'border-0 bg-ink font-bold text-white'
-                  : 'border border-field bg-white font-semibold text-ink',
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        <Tabs label="Worker status" value={status} onChange={setStatus} options={FILTERS} />
         <Input
-          className="h-10 max-w-[280px] rounded-xl text-sm"
+          aria-label="Search workers"
+          className="h-10 w-full rounded-xl text-sm sm:max-w-[280px]"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search name or phone"
@@ -86,7 +72,7 @@ export default function WorkersPage() {
       {!workers.data ? (
         <Spinner />
       ) : workers.data.length === 0 ? (
-        <Empty>No workers here yet.</Empty>
+        <Empty>{search ? `No workers match “${search}”.` : 'No workers here yet.'}</Empty>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-3">
           {workers.data.map((w) => (

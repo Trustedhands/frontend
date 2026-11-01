@@ -1,10 +1,6 @@
-function required(name: string, value: string | undefined): string {
-  if (!value)
-    throw new Error(`Missing environment variable ${name}. See apps/client/.env.example.`);
-  return value;
-}
-
-// Referenced literally so Next can inline them at build time
+// Referenced literally so Next can inline it at build time.
+// Empty (the default when API_ORIGIN is set): the API is called on this app's own
+// origin and proxied by next.config.ts, so the refresh cookie is first-party.
 export const env = {
-  apiUrl: required('NEXT_PUBLIC_API_URL', process.env.NEXT_PUBLIC_API_URL),
+  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? '',
 };

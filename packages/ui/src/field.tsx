@@ -15,7 +15,12 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
 }
 
 export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={cx(control, 'h-12 px-3', className)} {...props} />;
+  return (
+    <select
+      className={cx(control, 'th-select h-12 pr-10 pl-3 disabled:opacity-60', className)}
+      {...props}
+    />
+  );
 }
 
 export function TextArea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {

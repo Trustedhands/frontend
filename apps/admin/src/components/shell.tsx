@@ -74,36 +74,43 @@ export function Shell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-dvh flex-wrap bg-canvas">
-      <aside className="flex flex-[1_1_232px] flex-col gap-7 bg-ink px-4 py-6 text-white min-[1100px]:sticky min-[1100px]:top-0 min-[1100px]:h-dvh min-[1100px]:max-w-[264px]">
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 px-2 text-white no-underline hover:text-white"
-        >
-          <span
-            className="flex size-[34px] items-center justify-center rounded-[10px] bg-brand"
-            aria-hidden="true"
+    <div className="min-h-dvh bg-canvas md:flex">
+      {/* Sidebar from md up; a top bar with a scrolling nav on small screens */}
+      <aside className="flex flex-col gap-3 bg-ink px-4 py-4 text-white md:sticky md:top-0 md:h-dvh md:w-[248px] md:flex-none md:gap-7 md:overflow-y-auto md:py-6">
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 px-2 text-white no-underline hover:text-white"
           >
-            <svg
-              width={18}
-              height={18}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <span
+              className="flex size-[34px] items-center justify-center rounded-[10px] bg-brand"
+              aria-hidden="true"
             >
-              <path d="M3 11l9-7 9 7" />
-              <path d="M6 10v10h12V10" />
-            </svg>
-          </span>
-          <span className="font-display text-lg font-extrabold">
-            TrustedHands <span className="font-medium text-brand-soft">Ops</span>
-          </span>
-        </Link>
+              <svg
+                width={18}
+                height={18}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 11l9-7 9 7" />
+                <path d="M6 10v10h12V10" />
+              </svg>
+            </span>
+            <span className="font-display text-lg font-extrabold">
+              TrustedHands <span className="font-medium text-brand-soft">Ops</span>
+            </span>
+          </Link>
+          <SignOutButton onClick={signOut} className="md:hidden" />
+        </div>
 
-        <nav aria-label="Admin" className="flex flex-col gap-1">
+        <nav
+          aria-label="Admin"
+          className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:flex-col md:overflow-visible md:px-0"
+        >
           {NAV.filter(
             (item) => can(item.permission) || (item.href === '/settings' && can('team.manage')),
           ).map(({ href, label, icon: Icon, badge }) => {
@@ -114,7 +121,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={cx(
-                  'flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-sm no-underline',
+                  'flex min-h-11 flex-none items-center gap-3 rounded-[10px] px-3 text-sm whitespace-nowrap no-underline',
                   active
                     ? 'bg-ink-2 font-bold text-white hover:text-white'
                     : 'font-medium text-mist hover:bg-ink-deep hover:text-white',
@@ -135,7 +142,7 @@ export function Shell({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        <div className="mt-auto flex items-center gap-2.5 rounded-xl bg-ink-deep p-3">
+        <div className="mt-auto hidden items-center gap-2.5 rounded-xl bg-ink-deep p-3 md:flex">
           <span
             className="flex size-9 flex-none items-center justify-center rounded-full bg-brand-soft text-[13px] font-bold text-ink"
             aria-hidden="true"
@@ -146,19 +153,28 @@ export function Shell({ children }: { children: ReactNode }) {
             <span className="truncate text-sm font-bold">{me.fullName}</span>
             <span className="text-xs text-mist">{STAFF_ROLES[me.staffRole].label}</span>
           </span>
-          <button
-            type="button"
-            onClick={signOut}
-            aria-label="Sign out"
-            className="flex size-9 items-center justify-center rounded-lg border-0 bg-transparent text-mist hover:bg-ink-2 hover:text-white"
-          >
-            <LogOut size={18} aria-hidden="true" />
-          </button>
+          <SignOutButton onClick={signOut} />
         </div>
       </aside>
-      <main className="flex min-w-0 flex-[999_1_560px] flex-col gap-6 px-5 pt-8 pb-12 sm:px-10">
+      <main className="flex min-w-0 flex-1 flex-col gap-6 px-4 pt-6 pb-12 sm:px-8 md:pt-8 lg:px-10">
         {children}
       </main>
     </div>
+  );
+}
+
+function SignOutButton({ onClick, className }: { onClick: () => void; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Sign out"
+      className={cx(
+        'flex size-9 flex-none items-center justify-center rounded-lg border-0 bg-transparent text-mist hover:bg-ink-2 hover:text-white',
+        className,
+      )}
+    >
+      <LogOut size={18} aria-hidden="true" />
+    </button>
   );
 }
