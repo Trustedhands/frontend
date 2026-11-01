@@ -2111,6 +2111,8 @@ export interface components {
             workerShareRwf: number;
             feeRwf: number;
             refundedRwf: number;
+            /** @description Cancelled after payment: the worker gets nothing; unrefunded money goes to the platform */
+            requestCancelled: boolean;
         };
         TransactionPageView: {
             items: components["schemas"]["TransactionRowView"][];

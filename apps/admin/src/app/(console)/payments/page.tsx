@@ -141,6 +141,10 @@ function Money({ n }: { n: number }) {
 
 function txStatus(t: TransactionRow): { label: string; tone: BadgeTone } {
   if (t.refundedRwf >= t.amountRwf) return { label: 'Refunded', tone: 'neutral' };
+  if (t.requestCancelled)
+    return t.status === 'SETTLED'
+      ? { label: `Cancelled · ${rwf(t.feeRwf)} kept`, tone: 'neutral' }
+      : { label: 'Cancelled · in escrow', tone: 'warn' };
   if (t.refundedRwf > 0) return { label: `Part refunded ${rwf(t.refundedRwf)}`, tone: 'warn' };
   if (t.status === 'IN_ESCROW') return { label: 'In escrow', tone: 'info' };
   if (t.workerShareRwf === 0) return { label: 'Match fee', tone: 'brand' };

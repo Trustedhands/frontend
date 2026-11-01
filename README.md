@@ -29,7 +29,11 @@ Both apps need the backend running at `NEXT_PUBLIC_API_URL` (e.g. `http://localh
 The API issues its own tokens (see the backend README):
 
 - **Access token:** kept only in memory (`packages/session`). It's refreshed a minute before it expires, and once on page load.
-- **Refresh token:** an `httpOnly` cookie set by the API. Scripts can't read it, and it's only sent to `/v1/auth/*`. So the app and API must be **same-site**: `localhost` on different ports, or sibling subdomains such as `app.example.rw` and `api.example.rw`.
+- **Refresh token:** an `httpOnly` cookie set by the API. Scripts can't read it, and it's only sent to `/v1/auth/*`. Browsers only send it if the app and the API look like the **same site**, so each app reaches the API one of two ways:
+  - **Proxy (deployment): set `API_ORIGIN`.** The browser calls `/v1/*` on the app's own origin and Next forwards it to the API (`next.config.ts` rewrites). The cookie belongs to the app's domain, so the app and API can live on unrelated domains, e.g. two `*.onrender.com` hosts. Uploads and `Set-Cookie` pass through unchanged.
+  - **Direct (local dev): set `NEXT_PUBLIC_API_URL`.** The browser calls the API itself, which only works same-site: `localhost` ports, or sibling subdomains such as `app.example.rw` and `api.example.rw`.
+
+  Either way, each app's public origin goes in the API's `CORS_ORIGINS`, since the API checks `Origin` on the cookie endpoints and the proxy passes it through.
 - **Refreshing:** one at a time, across all tabs, using the Web Locks API. Refresh tokens rotate, so two simultaneous refreshes would look like token theft and end the session.
 - **Two apps, two sessions:** the admin console passes `?app=admin` to `/v1/auth/*`, so its refresh cookie (`th_refresh_admin`) is separate from the client app's (`th_refresh`). Signing out of one doesn't sign you out of the other.
 
@@ -98,6 +102,20 @@ The ops team's console (`apps/admin`). The nine screens of the admin design map 
 - **Who sees what.** The API's `/v1/admin/me` returns the staff member's permissions. The sidebar and each action are hidden without the matching permission, and the API enforces the same rules. Accounts without a staff role are signed out at login.
 - **Files.** Worker documents, ticket attachments and the CSV export need the bearer token, so they're fetched with it and shown through object URLs (`src/lib/files.ts`).
 - **First admin.** Register through the client app, then run `pnpm admin:promote <email>` in the backend. Invite everyone else from Settings & team.
+
+## Deploying
+
+Each app is a Node web service (it can't be a static site: request pages are dynamic and the proxy needs a server). On Render, for each app:
+
+| Setting | Value |
+| --- | --- |
+| Root directory | empty (the shared packages are at the repo root) |
+| Build | `corepack enable && pnpm install --frozen-lockfile && pnpm --filter @trustedhands/client build` (or `@trustedhands/admin`) |
+| Start | `pnpm --filter @trustedhands/client exec next start --port $PORT` (or `@trustedhands/admin`) |
+| `API_ORIGIN` | the API's **private** URL if your plan has private networking (e.g. `http://trustedhands-api:10000`), otherwise its public URL |
+| `NODE_VERSION` | `22` |
+
+`API_ORIGIN` is read when the app is built, so redeploy after changing it. On the API, set `CORS_ORIGINS` to both apps' public URLs, `ADMIN_APP_URL` to the admin's, and `TRUST_PROXY_HOPS` to `1` when the apps use the private URL (`2` with the public URL, as requests then pass the API's load balancer too). MoMo callbacks go to the API's public URL directly.
 
 ## Checks
 

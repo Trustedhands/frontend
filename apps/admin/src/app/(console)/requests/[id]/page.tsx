@@ -460,7 +460,8 @@ function CancelPanel({ request: r }: { request: AdminServiceRequestDetail }) {
       <h2 className="m-0 text-[15px] font-bold">Cancel request</h2>
       {r.payment && (
         <Alert tone="warn">
-          The client has paid. Cancelling doesn’t refund them; issue the refund separately.
+          The client has paid. Cancelling doesn’t refund them; issue the refund separately. Anything
+          not refunded within the release window (Settings) goes to the platform wallet.
         </Alert>
       )}
       <Field label="Reason (shown to the client)" small className="gap-1.5 font-semibold">
