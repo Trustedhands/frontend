@@ -2,11 +2,12 @@
 
 import { Alert, Spinner } from '@trustedhands/ui';
 import type { Transaction } from '@trustedhands/api';
-import { ArrowDownLeft, Receipt } from 'lucide-react';
+import { ArrowDownLeft, ChevronRight, Receipt } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { FilterTabs, TabScreen, TabTitle } from '@/components/tab-screen';
 import { formatMonth, formatMonthName, formatNumber, formatShortDate } from '@/lib/format';
-import { usePaymentHistory } from '@/lib/queries';
+import { usePaymentHistory, useWallet } from '@/lib/queries';
 
 type Filter = 'ALL' | 'PAYMENT' | 'REFUND';
 
@@ -14,11 +15,12 @@ const STATUS_LABEL: Record<Transaction['status'], string> = {
   SUCCESSFUL: 'Paid',
   PENDING: 'Pending',
   FAILED: 'Failed',
-  REFUNDED: 'Refunded to MoMo',
+  REFUNDED: 'Refunded',
 };
 
 export default function PaymentsPage() {
   const history = usePaymentHistory();
+  const wallet = useWallet().data;
   const [filter, setFilter] = useState<Filter>('ALL');
 
   if (history.isPending) {
@@ -39,6 +41,8 @@ export default function PaymentsPage() {
   }
 
   const { monthSpentRwf, monthPaymentCount, walletBalanceRwf, transactions } = history.data;
+  // The wallet shows once it's switched on, or if the client already has credit
+  const showWallet = Boolean(wallet?.enabled) || walletBalanceRwf > 0;
   const shown = transactions.filter((t) => filter === 'ALL' || t.kind === filter);
   const byMonth = groupByMonth(shown);
 
@@ -46,7 +50,7 @@ export default function PaymentsPage() {
     <TabScreen>
       <TabTitle>Payments</TabTitle>
 
-      <div className={walletBalanceRwf > 0 ? 'grid grid-cols-2 gap-2.5' : 'grid gap-2.5'}>
+      <div className={showWallet ? 'grid grid-cols-2 gap-2.5' : 'grid gap-2.5'}>
         <div className="flex flex-col gap-1 rounded-2xl bg-ink p-3.5 text-white">
           <span className="text-[13px] text-mist">Spent in {formatMonthName(new Date())}</span>
           <span className="font-display text-[22px] font-extrabold">
@@ -56,17 +60,22 @@ export default function PaymentsPage() {
             RWF · {monthPaymentCount} {monthPaymentCount === 1 ? 'payment' : 'payments'}
           </span>
         </div>
-        {/* Refunds go back to MoMo; a wallet only appears if credit is ever issued */}
-        {walletBalanceRwf > 0 && (
-          <div className="flex flex-col gap-1 rounded-2xl border border-line bg-white p-3.5">
-            <span className="text-[13px] text-muted">Wallet credit</span>
+        {showWallet && (
+          <Link
+            href="/wallet"
+            className="flex flex-col gap-1 rounded-2xl border border-line bg-white p-3.5 text-ink no-underline hover:border-ink hover:text-ink"
+          >
+            <span className="flex items-center justify-between text-[13px] text-muted">
+              Wallet
+              <ChevronRight size={16} aria-hidden="true" />
+            </span>
             <span className="font-display text-[22px] font-extrabold">
               {formatNumber(walletBalanceRwf)}
             </span>
-            <span className="text-xs text-muted">
-              RWF{walletBalanceRwf > 0 ? ' · from refunds' : ''}
+            <span className="text-xs font-semibold text-cta">
+              {wallet?.enabled ? 'Top up · activity' : 'RWF · activity'}
             </span>
-          </div>
+          </Link>
         )}
       </div>
 
@@ -110,7 +119,7 @@ function TransactionRow({ tx }: { tx: Transaction }) {
   const Icon = refund ? ArrowDownLeft : Receipt;
   const meta = [
     formatShortDate(tx.at),
-    'MoMo',
+    tx.method === 'WALLET' ? 'Wallet' : 'MoMo',
     tx.receiptReference ? `#${tx.receiptReference}` : tx.serviceRequestReference,
   ].join(' · ');
 
@@ -131,7 +140,11 @@ function TransactionRow({ tx }: { tx: Transaction }) {
           {formatNumber(tx.amountRwf)}
         </span>
         <span className={`text-xs ${tx.status === 'FAILED' ? 'text-danger' : 'text-muted'}`}>
-          {refund && tx.status === 'PENDING' ? 'Refund pending' : STATUS_LABEL[tx.status]}
+          {refund && tx.status === 'PENDING'
+            ? 'Refund pending'
+            : tx.status === 'REFUNDED'
+              ? `Refunded to ${tx.method === 'WALLET' ? 'wallet' : 'MoMo'}`
+              : STATUS_LABEL[tx.status]}
         </span>
       </span>
     </li>

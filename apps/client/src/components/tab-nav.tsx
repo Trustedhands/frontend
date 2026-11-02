@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardList, House, User, Wallet } from 'lucide-react';
-import { cx } from '@trustedhands/ui';
+import { ClipboardList, House, Plus, User, Wallet } from 'lucide-react';
+import { buttonClass, cx } from '@trustedhands/ui';
+import { BrandLockup } from '@/components/brand-mark';
 
 const TABS = [
   { href: '/', label: 'Home', icon: House },
@@ -12,7 +13,7 @@ const TABS = [
   { href: '/profile', label: 'Profile', icon: User },
 ];
 
-/** Bottom tab bar on phones; a centred top bar from 900px. */
+/** Bottom tab bar on phones; from 900px a top bar with the brand and "New request". */
 export function TabNav() {
   const pathname = usePathname();
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
@@ -22,10 +23,19 @@ export function TabNav() {
       aria-label="Main"
       className={cx(
         'sticky bottom-0 z-10 grid grid-cols-4 border-t border-line bg-white px-2 pt-1.5 pb-[max(12px,env(safe-area-inset-bottom))]',
-        'min-[900px]:top-0 min-[900px]:bottom-auto min-[900px]:order-first min-[900px]:flex min-[900px]:justify-center',
-        'min-[900px]:gap-2 min-[900px]:border-t-0 min-[900px]:border-b min-[900px]:px-6 min-[900px]:py-2',
+        'min-[900px]:top-0 min-[900px]:bottom-auto min-[900px]:order-first min-[900px]:flex min-[900px]:items-center',
+        'min-[900px]:gap-1 min-[900px]:border-t-0 min-[900px]:border-b min-[900px]:px-6 min-[900px]:py-2.5',
+        // Lines the bar up with the 1200px content column
+        'min-[1280px]:px-[calc((100vw_-_1200px)/2_+_32px)]',
       )}
     >
+      <Link
+        href="/"
+        aria-label="TrustedHands home"
+        className="mr-6 hidden text-ink no-underline hover:text-ink min-[900px]:block"
+      >
+        <BrandLockup />
+      </Link>
       {TABS.map(({ href, label, icon: Icon }) => {
         const active = isActive(href);
         return (
@@ -46,6 +56,13 @@ export function TabNav() {
           </Link>
         );
       })}
+      <Link
+        href="/requests/new"
+        className={buttonClass('primary', 'sm', 'ml-auto hidden min-[900px]:inline-flex')}
+      >
+        <Plus size={18} aria-hidden="true" />
+        New request
+      </Link>
     </nav>
   );
 }

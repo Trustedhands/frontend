@@ -4,7 +4,9 @@ import { Badge, Spinner } from '@trustedhands/ui';
 import { formatNumber, formatShortDate } from '@trustedhands/ui/format';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { ClientWalletPanel } from '@/components/client-wallet';
 import { Empty, ErrorNote, PageHeader, Panel, PanelTitle, Table, Td, Th } from '@/components/page';
 import { api, unwrap } from '@/lib/api';
 import { REQUEST_STATUS } from '@/lib/labels';
@@ -18,7 +20,17 @@ const KYC = {
 } as const;
 
 export default function ClientPage() {
+  return (
+    <Suspense>
+      <ClientView />
+    </Suspense>
+  );
+}
+
+function ClientView() {
   const { id } = useParams<{ id: string }>();
+  // "Top up" from the clients list opens the form straight away
+  const topUp = useSearchParams().get('topup') === '1';
   const client = useQuery({
     queryKey: ['admin', 'client', id],
     queryFn: () => unwrap(api.GET('/v1/admin/clients/{id}', { params: { path: { id } } })),
@@ -62,7 +74,13 @@ export default function ClientPage() {
             </Link>
           )}
         </Panel>
-        <Panel className="flex-[3_1_600px] p-0 pt-5">
+        <ClientWalletPanel
+          clientId={c.id}
+          clientName={c.companyName ?? c.fullName}
+          startOpen={topUp}
+          className="flex-[2_1_440px]"
+        />
+        <Panel className="flex-[1_1_100%] p-0 pt-5">
           <div className="px-5">
             <PanelTitle>Recent requests</PanelTitle>
           </div>

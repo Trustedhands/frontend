@@ -3,12 +3,13 @@
 import { Alert, Button, Card, cx, Field, Input, TextArea } from '@trustedhands/ui';
 import type { Me, Payment, ServiceRequestDetail } from '@trustedhands/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Smartphone } from 'lucide-react';
+import { Smartphone, Wallet } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { MomoChip } from '@/components/momo-chip';
 import { api, unwrap } from '@/lib/api';
 import { formatRwf } from '@/lib/format';
-import { keys } from '@/lib/queries';
+import { keys, useWallet } from '@/lib/queries';
 import { normalizeLocalPhone } from '@/lib/validation';
 import { CancelRequest } from './cancel-request';
 import { RequestProgress } from './progress';
@@ -21,7 +22,13 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
   const queryClient = useQueryClient();
   const quote = request.quote!;
   const saved = me.paymentMethods[0];
-  const [useSaved, setUseSaved] = useState(Boolean(saved));
+  const wallet = useWallet().data;
+  const walletUsable = Boolean(wallet?.enabled);
+  const walletCovers = walletUsable && wallet!.balanceRwf >= quote.totalRwf;
+  const [picked, setPayWith] = useState<'WALLET' | 'SAVED' | 'OTHER' | null>(null);
+  // Until the client picks, prefer the wallet when it covers the price
+  const payWith = picked ?? (walletCovers ? 'WALLET' : saved ? 'SAVED' : 'OTHER');
+  const useSaved = payWith === 'SAVED';
   const [number, setNumber] = useState(me.phone?.replace(/^\+?250/, '') ?? '');
   const [numberError, setNumberError] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
@@ -31,8 +38,21 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
       queryClient.invalidateQueries({ queryKey: keys.request(request.id) }),
       queryClient.invalidateQueries({ queryKey: ['requests'] }),
       queryClient.invalidateQueries({ queryKey: keys.payments }),
+      queryClient.invalidateQueries({ queryKey: keys.wallet }),
       queryClient.invalidateQueries({ queryKey: keys.me }),
     ]);
+
+  // Settles at once: no prompt, no polling
+  const payFromWallet = useMutation({
+    mutationFn: () =>
+      unwrap(
+        api.POST('/v1/service-requests/{id}/payments', {
+          params: { path: { id: request.id } },
+          body: { method: 'WALLET' },
+        }),
+      ),
+    onSuccess: () => refreshAfterPayment(),
+  });
 
   const initiate = useMutation({
     mutationFn: (msisdn: string) =>
@@ -75,6 +95,10 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
   }, [orphanedPending, queryClient, request.id]);
 
   const pay = () => {
+    if (payWith === 'WALLET') {
+      payFromWallet.mutate();
+      return;
+    }
     if (useSaved && saved) {
       initiate.mutate(saved.msisdn);
       return;
@@ -141,8 +165,34 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
         <>
           <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
             <legend className="mb-2.5 text-sm font-bold">Pay with</legend>
+            {walletUsable && (
+              <PayOption
+                checked={payWith === 'WALLET'}
+                disabled={!walletCovers}
+                onSelect={() => setPayWith('WALLET')}
+              >
+                <span className="flex size-9 flex-none items-center justify-center rounded-[10px] bg-sand text-cta">
+                  <Wallet size={18} aria-hidden="true" />
+                </span>
+                <span className="flex flex-col">
+                  <span className="text-[15px] font-bold">Wallet</span>
+                  <span className="text-[13px] text-muted">
+                    {formatRwf(wallet!.balanceRwf)} available
+                    {!walletCovers && ' · not enough for this booking'}
+                  </span>
+                </span>
+              </PayOption>
+            )}
+            {walletUsable && !walletCovers && (
+              <Link
+                href={`/wallet/top-up?amount=${quote.totalRwf - wallet!.balanceRwf}&back=/requests/${request.id}`}
+                className="-mt-0.5 mb-1 self-start text-[13px] font-bold"
+              >
+                Top up {formatRwf(quote.totalRwf - wallet!.balanceRwf)} to pay from your wallet
+              </Link>
+            )}
             {saved && (
-              <PayOption checked={useSaved} onSelect={() => setUseSaved(true)}>
+              <PayOption checked={useSaved} onSelect={() => setPayWith('SAVED')}>
                 <MomoChip />
                 <span className="flex flex-col">
                   <span className="text-[15px] font-bold">Mobile Money</span>
@@ -150,13 +200,13 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
                 </span>
               </PayOption>
             )}
-            <PayOption checked={!useSaved} onSelect={() => setUseSaved(false)}>
+            <PayOption checked={payWith === 'OTHER'} onSelect={() => setPayWith('OTHER')}>
               <MomoChip />
               <span className="text-[15px] font-bold">
                 {saved ? 'A different MoMo number' : 'Mobile Money'}
               </span>
             </PayOption>
-            {!useSaved && (
+            {payWith === 'OTHER' && (
               <Field label="MTN Mobile Money number" error={numberError} className="mt-1">
                 <div className="flex gap-2">
                   <span className="flex h-12 items-center rounded-xl border border-field bg-white px-3 text-[15px] font-semibold">
@@ -183,10 +233,13 @@ export function ReviewAndPay({ request, me }: { request: ServiceRequestDetail; m
             </Alert>
           )}
           {initiate.error && <Alert>{initiate.error.message}</Alert>}
+          {payFromWallet.error && <Alert>{payFromWallet.error.message}</Alert>}
 
           <div className="mt-auto flex flex-col gap-1.5">
-            <Button onClick={pay} loading={initiate.isPending}>
-              Accept &amp; pay {formatRwf(quote.totalRwf)}
+            <Button onClick={pay} loading={initiate.isPending || payFromWallet.isPending}>
+              {payWith === 'WALLET'
+                ? `Accept & pay ${formatRwf(quote.totalRwf)} from wallet`
+                : `Accept & pay ${formatRwf(quote.totalRwf)}`}
             </Button>
             <AdjustPrice request={request} />
             <CancelRequest request={request} />
@@ -208,24 +261,28 @@ function PriceRow({ label, value }: { label: string; value: string }) {
 
 function PayOption({
   checked,
+  disabled = false,
   onSelect,
   children,
 }: {
   checked: boolean;
+  disabled?: boolean;
   onSelect: () => void;
   children: React.ReactNode;
 }) {
   return (
     <label
       className={cx(
-        'flex cursor-pointer items-center gap-3 rounded-[14px] bg-white px-4 py-3.5',
+        'flex items-center gap-3 rounded-[14px] bg-white px-4 py-3.5',
         checked ? 'border-2 border-ink' : 'border border-field',
+        disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
       )}
     >
       <input
         type="radio"
         name="payWith"
         checked={checked}
+        disabled={disabled}
         onChange={onSelect}
         className="m-0 size-[18px] accent-ink"
       />
@@ -258,8 +315,8 @@ function PendingPanel({
       </div>
       <p className="m-0 text-sm leading-[1.45] text-muted">
         We sent a request for {formatRwf(amount)}
-        {payment ? ` to ${payment.msisdnMasked}` : ''}. Enter your MoMo PIN to approve it. If no
-        prompt appears, open your MoMo menu and look for pending approvals.
+        {payment?.msisdnMasked ? ` to ${payment.msisdnMasked}` : ''}. Enter your MoMo PIN to approve
+        it. If no prompt appears, open your MoMo menu and look for pending approvals.
       </p>
       {payment ? (
         <span className="flex items-center gap-2 text-[13px] font-semibold text-muted">

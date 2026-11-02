@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./household": "./src/household.ts"
   },
   "scripts": {
     "generate": "openapi-typescript ${API_SPEC_URL:-http://localhost:3000/docs/openapi.json} -o src/schema.d.ts",

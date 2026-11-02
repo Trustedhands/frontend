@@ -11,7 +11,8 @@ import {
   Select,
   TextArea,
 } from '@trustedhands/ui';
-import type { GenderPreference, Language } from '@trustedhands/api';
+import type { GenderPreference, HomeArea, HomeType, Language } from '@trustedhands/api';
+import { HOME_AREA_LABELS, HOME_AREAS, HOME_TYPE_LABELS } from '@trustedhands/api/household';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
@@ -30,6 +31,13 @@ const START_TIMES = Array.from(
 );
 /** 1 to 8 hours in half hours */
 const DURATIONS = Array.from({ length: 15 }, (_, i) => 1 + i / 2);
+const BEDROOMS = Array.from({ length: 11 }, (_, i) => i);
+const BATHROOMS = Array.from({ length: 10 }, (_, i) => i + 1);
+const HOME_TYPE_OPTIONS = (Object.keys(HOME_TYPE_LABELS) as HomeType[]).map((value) => ({
+  value,
+  label: HOME_TYPE_LABELS[value],
+}));
+const AREA_OPTIONS = HOME_AREAS.map((value) => ({ value, label: HOME_AREA_LABELS[value] }));
 
 export default function NewRequestPage() {
   return (
@@ -63,6 +71,13 @@ function NewRequestForm() {
   const [salary, setSalary] = useState('');
   const isPlacement =
     service?.feeType === 'MATCH' || (service?.feeType === 'EITHER' && kind === 'PLACEMENT');
+  // The home being serviced, for services that ask
+  const [homeType, setHomeType] = useState<HomeType | null>(null);
+  const [bedrooms, setBedrooms] = useState(2);
+  const [bathrooms, setBathrooms] = useState(1);
+  const [areas, setAreas] = useState<HomeArea[]>([]);
+  const asksHomeSize = Boolean(service?.asksHomeSize);
+  const asksAreas = Boolean(service?.asksAreas);
   const [gender, setGender] = useState<GenderPreference>('ANY');
   const [languages, setLanguages] = useState<Language[]>(me.profile!.preferredLanguages);
   const [useHome, setUseHome] = useState(Boolean(home));
@@ -97,6 +112,8 @@ function NewRequestForm() {
       next.date = 'Choose a date within the next year';
     if (isPlacement && salaryRwf !== undefined && (!Number.isInteger(salaryRwf) || salaryRwf <= 0))
       next.salary = 'Enter a monthly amount in RWF, or leave it blank';
+    if (asksHomeSize && !homeType) next.homeType = 'Choose the type of home';
+    if (asksAreas && !areas.length) next.areas = 'Choose at least one part of the home';
     if (address.street.length < 2) next.street = 'Add a street, house number or landmark';
     setErrors(next);
     if (Object.keys(next).length) {
@@ -121,6 +138,14 @@ function NewRequestForm() {
             ...(isPlacement
               ? { placement: { arrangement, daysPerWeek, salaryRwf } }
               : { durationHours: duration }),
+            ...(asksHomeSize || asksAreas
+              ? {
+                  household: {
+                    ...(asksHomeSize ? { homeType: homeType!, bedrooms, bathrooms } : {}),
+                    ...(asksAreas ? { areas } : {}),
+                  },
+                }
+              : {}),
             preferredGender: gender,
             preferredLanguages: languages,
             address,
@@ -195,6 +220,74 @@ function NewRequestForm() {
             aria-invalid={Boolean(errors.description) || undefined}
           />
         </Field>
+
+        {(asksHomeSize || asksAreas) && (
+          <section className="flex flex-col gap-4 rounded-[18px] border border-line bg-white p-4">
+            <span className="text-sm font-bold">Your home</span>
+            {asksHomeSize && (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <ChipGroup
+                    legend="Type of home"
+                    legendClassName="mb-1.5 text-[13px] text-muted"
+                    options={HOME_TYPE_OPTIONS}
+                    value={homeType}
+                    onChange={setHomeType}
+                  />
+                  {errors.homeType && !homeType && (
+                    <span role="alert" className="text-[13px] font-medium text-danger">
+                      {errors.homeType}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <Field label="Bedrooms" small className="gap-1.5 font-semibold">
+                    <Select
+                      className="h-[46px]"
+                      value={bedrooms}
+                      onChange={(e) => setBedrooms(Number(e.target.value))}
+                    >
+                      {BEDROOMS.map((n) => (
+                        <option key={n} value={n}>
+                          {n === 0 ? 'Studio' : n === 10 ? '10 or more' : n}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field label="Bathrooms" small className="gap-1.5 font-semibold">
+                    <Select
+                      className="h-[46px]"
+                      value={bathrooms}
+                      onChange={(e) => setBathrooms(Number(e.target.value))}
+                    >
+                      {BATHROOMS.map((n) => (
+                        <option key={n} value={n}>
+                          {n === 10 ? '10 or more' : n}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </div>
+              </>
+            )}
+            {asksAreas && (
+              <div className="flex flex-col gap-1.5">
+                <MultiChipGroup
+                  legend="Which parts of the home?"
+                  legendClassName="mb-1.5 text-[13px] text-muted"
+                  options={AREA_OPTIONS}
+                  value={areas}
+                  onChange={setAreas}
+                />
+                {errors.areas && !areas.length && (
+                  <span role="alert" className="text-[13px] font-medium text-danger">
+                    {errors.areas}
+                  </span>
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="flex flex-col gap-4 rounded-[18px] border border-line bg-white p-4">
           <span className="text-sm font-bold">{isPlacement ? 'Start date' : 'When'}</span>

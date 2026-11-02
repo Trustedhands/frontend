@@ -1,17 +1,19 @@
 'use client';
 
 import { Badge, Button, Input, Spinner } from '@trustedhands/ui';
-import { formatShortDate } from '@trustedhands/ui/format';
+import { formatNumber, formatShortDate } from '@trustedhands/ui/format';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Empty, ErrorNote, PageHeader, Panel, Table, Td, Th } from '@/components/page';
 import { api, unwrap } from '@/lib/api';
+import { useCan } from '@/lib/staff';
 import { useDebounced } from '@/lib/use-debounced';
 
 const PAGE_SIZE = 25;
 
 export default function ClientsPage() {
+  const can = useCan();
   const [text, setText] = useState('');
   const q = useDebounced(text.trim());
   const [page, setPage] = useState(1);
@@ -32,7 +34,7 @@ export default function ClientsPage() {
     <>
       <PageHeader
         title="Clients"
-        subtitle="Everyone who has signed up to book. Select a client to see their requests."
+        subtitle="Everyone who has signed up to book. Open a client to see their requests and wallet."
       />
       <Input
         type="search"
@@ -52,7 +54,7 @@ export default function ClientsPage() {
         <Empty>{q ? `No clients match “${q}”.` : 'No clients yet.'}</Empty>
       ) : (
         <Panel className="p-0">
-          <Table minWidth={760}>
+          <Table minWidth={980}>
             <thead>
               <tr>
                 <Th>Client</Th>
@@ -60,7 +62,11 @@ export default function ClientsPage() {
                 <Th>Type</Th>
                 <Th>Verified</Th>
                 <Th className="text-right">Requests</Th>
+                <Th className="text-right">Wallet (RWF)</Th>
                 <Th>Joined</Th>
+                <Th>
+                  <span className="sr-only">Actions</span>
+                </Th>
               </tr>
             </thead>
             <tbody>
@@ -84,7 +90,33 @@ export default function ClientsPage() {
                     </div>
                   </Td>
                   <Td className="text-right font-bold">{c.requestCount}</Td>
-                  <Td>{formatShortDate(c.createdAt)}</Td>
+                  <Td
+                    className={
+                      c.walletBalanceRwf > 0 ? 'text-right font-bold' : 'text-right text-muted'
+                    }
+                  >
+                    {formatNumber(c.walletBalanceRwf)}
+                  </Td>
+                  <Td className="whitespace-nowrap">{formatShortDate(c.createdAt)}</Td>
+                  <Td>
+                    <div className="flex justify-end gap-2">
+                      <Link
+                        href={`/clients/${c.id}`}
+                        className="inline-flex min-h-9 items-center rounded-lg border border-field bg-white px-3 text-[13px] font-bold text-ink no-underline"
+                      >
+                        View
+                      </Link>
+                      {can('payments.manage') && (
+                        <Link
+                          href={`/clients/${c.id}?topup=1`}
+                          aria-label={`Top up ${c.companyName ?? c.fullName}'s wallet`}
+                          className="inline-flex min-h-9 items-center rounded-lg bg-ink px-3 text-[13px] font-bold text-white no-underline hover:text-white"
+                        >
+                          Top up
+                        </Link>
+                      )}
+                    </div>
+                  </Td>
                 </tr>
               ))}
             </tbody>

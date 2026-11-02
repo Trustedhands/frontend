@@ -7,6 +7,7 @@ import {
   CreditCard,
   Headset,
   LayoutDashboard,
+  Layers,
   LogOut,
   Settings,
   Shuffle,
@@ -46,6 +47,7 @@ const NAV: NavItem[] = [
   { href: '/clients', label: 'Clients', icon: UserRound, permission: 'clients.view' },
   { href: '/payments', label: 'Payments', icon: CreditCard, permission: 'payments.view' },
   { href: '/support', label: 'Customer service', icon: Headset, permission: 'tickets.view' },
+  { href: '/services', label: 'Services', icon: Layers, permission: 'settings.manage' },
   { href: '/settings', label: 'Settings & team', icon: Settings, permission: 'settings.manage' },
 ];
 

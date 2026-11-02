@@ -2,10 +2,11 @@
 
 import { Alert, Badge, Button, Field, Input, Select, Spinner, cx } from '@trustedhands/ui';
 import { formatShortDate } from '@trustedhands/ui/format';
-import type { AdminServiceType, Settings, StaffRole } from '@trustedhands/api';
+import type { Settings, StaffRole } from '@trustedhands/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, Plus } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
+import { IconButton, Toggle } from '@/components/controls';
 import { ErrorNote, PageHeader, Panel, PanelTitle, Table, Td, Th } from '@/components/page';
 import { api, unwrap } from '@/lib/api';
 import { STAFF_ROLES } from '@/lib/labels';
@@ -19,14 +20,8 @@ const CRITERIA: Record<Criterion, string> = {
   RATING: 'Highest rating',
   DISTANCE: 'Closest to the address',
 };
-const FEE_TYPES: Record<AdminServiceType['feeType'], string> = {
-  SERVICE: 'Service fee',
-  MATCH: 'Match fee',
-  EITHER: 'Either',
-};
 const ROLES = Object.keys(STAFF_ROLES) as StaffRole[];
 const settingsKey = ['admin', 'settings'] as const;
-const serviceTypesKey = ['admin', 'service-types'] as const;
 const teamKey = ['admin', 'team'] as const;
 
 const toInt = (s: string) => (s.trim() ? Number(s.replace(/[\s,]/g, '')) : NaN);
@@ -41,7 +36,6 @@ export default function SettingsPage() {
         subtitle="Changes apply to new requests only. Every change is logged with who made it."
       />
       {can('settings.manage') && <PlatformSettings />}
-      {can('settings.manage') && <ServiceTypes />}
       {can('team.manage') && <TeamSection />}
     </>
   );
@@ -75,6 +69,7 @@ function SettingsForm({
   const [releaseHours, setReleaseHours] = useState(String(s.releaseAfterHours));
   const [priority, setPriority] = useState<Criterion[]>(s.matchingPriority);
   const [momo, setMomo] = useState(s.momoEnabled);
+  const [wallet, setWallet] = useState(s.clientWalletEnabled);
   const [saved, setSaved] = useState(false);
   const save = useMutation({
     mutationFn: () =>
@@ -86,6 +81,7 @@ function SettingsForm({
             releaseAfterHours: toInt(releaseHours),
             matchingPriority: priority,
             momoEnabled: momo,
+            clientWalletEnabled: wallet,
           },
         }),
       ),
@@ -105,7 +101,8 @@ function SettingsForm({
     toInt(matchFee) !== s.matchFeeRwf ||
     toInt(releaseHours) !== s.releaseAfterHours ||
     priority.join() !== s.matchingPriority.join() ||
-    momo !== s.momoEnabled;
+    momo !== s.momoEnabled ||
+    wallet !== s.clientWalletEnabled;
   const move = (i: number, by: -1 | 1) => {
     setSaved(false);
     setPriority((p) => {
@@ -193,9 +190,12 @@ function SettingsForm({
           />
           <Toggle
             label="Client wallet"
-            hint="Refunds & credit — later phase"
-            checked={s.clientWalletEnabled}
-            disabled
+            hint="clients top up with MoMo and pay bookings from their balance"
+            checked={wallet}
+            onChange={(v) => {
+              setSaved(false);
+              setWallet(v);
+            }}
           />
           <Toggle label="Voucher codes" hint="Later phase" checked={s.vouchersEnabled} disabled />
         </Panel>
@@ -245,237 +245,6 @@ function FeeField({
         <span className="text-sm text-muted">{suffix}</span>
       </div>
     </Field>
-  );
-}
-
-function IconButton({
-  label,
-  disabled,
-  onClick,
-  children,
-}: {
-  label: string;
-  disabled?: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      disabled={disabled}
-      onClick={onClick}
-      className="flex size-8 items-center justify-center rounded-lg border border-field bg-white text-ink disabled:opacity-30"
-    >
-      {children}
-    </button>
-  );
-}
-
-function Toggle({
-  label,
-  hint,
-  checked,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  hint: string;
-  checked: boolean;
-  disabled?: boolean;
-  onChange?: (v: boolean) => void;
-}) {
-  return (
-    <label
-      className={cx(
-        'flex items-center justify-between gap-3 text-sm',
-        disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
-      )}
-    >
-      <span>
-        <span className="font-bold">{label}</span> <span className="text-muted">· {hint}</span>
-      </span>
-      <input
-        type="checkbox"
-        role="switch"
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange?.(e.target.checked)}
-        className="h-6 w-11 flex-none accent-ink"
-      />
-    </label>
-  );
-}
-
-function ServiceTypes() {
-  const types = useQuery({
-    queryKey: serviceTypesKey,
-    queryFn: () => unwrap(api.GET('/v1/admin/settings/service-types')),
-  });
-  const [adding, setAdding] = useState(false);
-  return (
-    <Panel className="p-0 pt-5">
-      <div className="px-5">
-        <PanelTitle
-          action={
-            !adding && (
-              <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
-                <Plus size={16} aria-hidden="true" />
-                Add service
-              </Button>
-            )
-          }
-        >
-          Service types
-        </PanelTitle>
-      </div>
-      {types.error && <ErrorNote error={types.error} />}
-      {!types.data ? (
-        <Spinner />
-      ) : (
-        <Table minWidth={820}>
-          <thead>
-            <tr>
-              <Th>Service</Th>
-              <Th>Pricing guide (worker fee)</Th>
-              <Th>Fee type</Th>
-              <Th>Shown to clients</Th>
-              <Th />
-            </tr>
-          </thead>
-          <tbody>
-            {adding && (
-              <ServiceTypeRow onDone={() => setAdding(false)} nextOrder={types.data.length} />
-            )}
-            {types.data.map((t) => (
-              <ServiceTypeRow key={t.key} type={t} />
-            ))}
-          </tbody>
-        </Table>
-      )}
-    </Panel>
-  );
-}
-
-/** One editable row; with no `type` it's the "Add service" row. */
-function ServiceTypeRow({
-  type: t,
-  onDone,
-  nextOrder = 0,
-}: {
-  type?: AdminServiceType;
-  onDone?: () => void;
-  nextOrder?: number;
-}) {
-  const queryClient = useQueryClient();
-  const [label, setLabel] = useState(t?.label ?? '');
-  const [guide, setGuide] = useState(t?.pricingGuide ?? '');
-  const [feeType, setFeeType] = useState<AdminServiceType['feeType']>(t?.feeType ?? 'SERVICE');
-  const [visible, setVisible] = useState(t?.visible ?? true);
-  const key = label
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, '_')
-    .replace(/^_|_$/g, '')
-    .replace(/^(?=[^A-Z])/, 'S_')
-    .slice(0, 40);
-  const save = useMutation({
-    mutationFn: () =>
-      t
-        ? unwrap(
-            api.PATCH('/v1/admin/settings/service-types/{key}', {
-              params: { path: { key: t.key } },
-              body: { label: label.trim(), pricingGuide: guide.trim(), feeType, visible },
-            }),
-          )
-        : unwrap(
-            api.POST('/v1/admin/settings/service-types', {
-              body: {
-                key,
-                label: label.trim(),
-                pricingGuide: guide.trim() || undefined,
-                feeType,
-                visible,
-                sortOrder: nextOrder,
-              },
-            }),
-          ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: serviceTypesKey });
-      onDone?.();
-    },
-  });
-  const dirty =
-    !t ||
-    label.trim() !== t.label ||
-    guide.trim() !== (t.pricingGuide ?? '') ||
-    feeType !== t.feeType ||
-    visible !== t.visible;
-  return (
-    <tr>
-      <Td>
-        <Input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          aria-label="Service name"
-          placeholder="e.g. Gardening"
-          className="h-10 rounded-lg text-sm font-semibold"
-        />
-      </Td>
-      <Td>
-        <Input
-          value={guide}
-          onChange={(e) => setGuide(e.target.value)}
-          aria-label="Pricing guide"
-          placeholder="e.g. 5,000 / hour"
-          className="h-10 rounded-lg text-sm"
-        />
-      </Td>
-      <Td>
-        <Select
-          value={feeType}
-          onChange={(e) => setFeeType(e.target.value as AdminServiceType['feeType'])}
-          aria-label="Fee type"
-          className="h-10 rounded-lg text-sm"
-        >
-          {Object.entries(FEE_TYPES).map(([v, l]) => (
-            <option key={v} value={v}>
-              {l}
-            </option>
-          ))}
-        </Select>
-      </Td>
-      <Td>
-        <input
-          type="checkbox"
-          role="switch"
-          aria-label="Shown to clients"
-          checked={visible}
-          onChange={(e) => setVisible(e.target.checked)}
-          className="h-5 w-9 accent-ink"
-        />
-      </Td>
-      <Td className="text-right whitespace-nowrap">
-        {save.error && (
-          <div className="mb-1 text-[13px] text-danger">{(save.error as Error).message}</div>
-        )}
-        {dirty && (
-          <Button
-            size="sm"
-            disabled={!label.trim() || !key}
-            loading={save.isPending}
-            onClick={() => save.mutate()}
-          >
-            {t ? 'Save' : 'Add'}
-          </Button>
-        )}
-        {onDone && (
-          <Button size="sm" variant="ghost" onClick={onDone}>
-            Cancel
-          </Button>
-        )}
-      </Td>
-    </tr>
   );
 }
 
