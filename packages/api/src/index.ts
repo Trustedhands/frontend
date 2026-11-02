@@ -45,6 +45,12 @@ export type WorkerWallet = Schemas['WorkerWalletView'];
 export type WorkerBalance = Schemas['WorkerBalanceView'];
 export type Settings = Schemas['SettingsView'];
 export type AdminServiceType = Schemas['ServiceTypeView'];
+export type ClientWallet = Schemas['ClientWalletView'];
+export type ClientWalletEntry = Schemas['ClientWalletEntryView'];
+export type WalletTopUp = Schemas['WalletTopUpView'];
+export type Household = Schemas['HouseholdView'];
+export type HomeType = NonNullable<Household['homeType']>;
+export type HomeArea = Household['areas'][number];
 export type WorkerStatus = WorkerSummary['status'];
 export type TicketStatus = Ticket['status'];
 

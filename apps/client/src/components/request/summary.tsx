@@ -1,5 +1,6 @@
 import { Card } from '@trustedhands/ui';
 import type { ServiceRequestDetail } from '@trustedhands/api';
+import { describeAreas, describeHomeSize } from '@trustedhands/api/household';
 import { DetailList } from '@/components/screen';
 import { describePlacement, describeSchedule } from '@/lib/format';
 import { describeWorkerPreference } from '@/lib/labels';
@@ -23,6 +24,7 @@ export function RequestSummary({ request }: { request: ServiceRequestDetail }) {
             ? ([['Terms', describePlacement(request.placement)]] as Array<[string, string]>)
             : []),
           ['Where', addressLine(request)],
+          ...householdItems(request),
           ['Worker', describeWorkerPreference(request.preferredGender, request.preferredLanguages)],
           [
             'Notes',
@@ -34,4 +36,15 @@ export function RequestSummary({ request }: { request: ServiceRequestDetail }) {
       />
     </Card>
   );
+}
+
+/** "Home" and "Focus on" rows, for services that asked about the home. */
+export function householdItems(r: ServiceRequestDetail): Array<[string, string]> {
+  const h = r.household;
+  if (!h) return [];
+  const size = describeHomeSize(h);
+  return [
+    ...(size ? ([['Home', size]] as Array<[string, string]>) : []),
+    ...(h.areas.length ? ([['Focus on', describeAreas(h.areas)]] as Array<[string, string]>) : []),
+  ];
 }

@@ -1,13 +1,15 @@
 import { cx } from '@trustedhands/ui';
 import type { ReactNode } from 'react';
 
-/** Content area of a tab page (Home is wider, for its two-column cards). */
+/** Content area of a tab page (Home uses the full width on large screens). */
 export function TabScreen({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
     <main
       className={cx(
         'mx-auto flex w-full flex-1 flex-col gap-4 px-5 pt-5 pb-4',
-        wide ? 'max-w-[960px]' : 'max-w-[720px]',
+        wide
+          ? 'max-w-[1200px] min-[900px]:px-6 min-[900px]:pt-8 min-[1280px]:px-8'
+          : 'max-w-[720px]',
       )}
     >
       {children}

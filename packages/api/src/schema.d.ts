@@ -797,8 +797,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * "Accept & pay". Sends a MoMo prompt to the payer's phone; poll
-         *     GET /payments/:id until the status leaves PENDING.
+         * "Accept & pay". MoMo sends a prompt to the payer's phone; poll
+         *     GET /payments/:id until the status leaves PENDING. Wallet payments
+         *     come back SUCCESSFUL straight away.
          */
         post: operations["PaymentsController_initiate"];
         delete?: never;
@@ -834,6 +835,89 @@ export interface paths {
         get: operations["PaymentsController_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/wallet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WalletController_view"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/wallet/top-ups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sends a MoMo prompt; poll GET /wallet/top-ups/:id until it leaves PENDING. */
+        post: operations["WalletController_topUp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/wallet/top-ups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Also refreshes the status from MoMo while PENDING. */
+        get: operations["WalletController_getTopUp"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/clients/{id}/wallet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminWalletController_view"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/clients/{id}/wallet/credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Records money ops received for the client (cash, bank) or a goodwill credit. */
+        post: operations["AdminWalletController_credit"];
         delete?: never;
         options?: never;
         head?: never;
@@ -995,7 +1079,7 @@ export interface paths {
         };
         get: operations["AdminFinanceController_refunds"];
         put?: never;
-        /** "Issue refund": back to the payer's MoMo number */
+        /** "Issue refund": back the way it was paid (MoMo number or wallet) */
         post: operations["AdminFinanceController_refund"];
         delete?: never;
         options?: never;
@@ -1195,6 +1279,8 @@ export interface components {
             feeType: "SERVICE" | "MATCH" | "EITHER";
             key: string;
             label: string;
+            asksHomeSize: boolean;
+            asksAreas: boolean;
         };
         SettingsView: {
             matchingPriority: ("AVAILABILITY" | "LANGUAGE" | "GENDER" | "RATING" | "DISTANCE")[];
@@ -1229,6 +1315,10 @@ export interface components {
             pricingGuide: string | null;
             visible: boolean;
             sortOrder: number;
+            /** @description The request form asks for home type, bedrooms and bathrooms */
+            asksHomeSize: boolean;
+            /** @description The request form asks which parts of the home to service */
+            asksAreas: boolean;
         };
         CreateServiceTypeDto: {
             /** @enum {string} */
@@ -1239,6 +1329,8 @@ export interface components {
             pricingGuide?: string;
             visible?: boolean;
             sortOrder?: number;
+            asksHomeSize?: boolean;
+            asksAreas?: boolean;
         };
         UpdateServiceTypeDto: {
             /** @enum {string} */
@@ -1249,6 +1341,8 @@ export interface components {
             pricingGuide?: string;
             visible?: boolean;
             sortOrder?: number;
+            asksHomeSize?: boolean;
+            asksAreas?: boolean;
         };
         StaffMeView: {
             /** @enum {string} */
@@ -1617,6 +1711,15 @@ export interface components {
             /** @description Monthly salary the client has in mind (RWF); agreed directly with the worker */
             salaryRwf?: number;
         };
+        HouseholdDto: {
+            /** @enum {string} */
+            homeType?: "APARTMENT" | "HOUSE" | "VILLA";
+            /** @description Parts of the home to service */
+            areas?: ("KITCHEN" | "LIVING_ROOM" | "DINING" | "BEDROOMS" | "BATHROOMS" | "WINDOWS" | "LAUNDRY_AREA" | "COMPOUND" | "GARDEN")[];
+            /** @description 0 for a studio */
+            bedrooms?: number;
+            bathrooms?: number;
+        };
         CreateServiceRequestDto: {
             /**
              * @description For services offered both ways (feeType EITHER); otherwise implied by the service
@@ -1641,6 +1744,8 @@ export interface components {
             durationHours?: number;
             /** @description Placements: live-in or live-out, days per week, optional salary */
             placement?: components["schemas"]["PlacementTermsDto"];
+            /** @description The home to service, where the service asks for it */
+            household?: components["schemas"]["HouseholdDto"];
             address: components["schemas"]["AddressDto"];
         };
         ServiceAddressView: {
@@ -1649,6 +1754,13 @@ export interface components {
             street: string;
             latitude: number | null;
             longitude: number | null;
+        };
+        HouseholdView: {
+            /** @enum {string|null} */
+            homeType: "APARTMENT" | "HOUSE" | "VILLA" | null;
+            areas: ("KITCHEN" | "LIVING_ROOM" | "DINING" | "BEDROOMS" | "BATHROOMS" | "WINDOWS" | "LAUNDRY_AREA" | "COMPOUND" | "GARDEN")[];
+            bedrooms: number | null;
+            bathrooms: number | null;
         };
         QuoteView: {
             workerFeeRwf: number;
@@ -1667,6 +1779,8 @@ export interface components {
             at: string;
         };
         PaymentBriefView: {
+            /** @enum {string} */
+            method: "MTN_MOMO" | "WALLET";
             id: string;
             /** @description e.g. RC-10482 */
             receiptReference: string;
@@ -1706,6 +1820,8 @@ export interface components {
             preferredGender: "ANY" | "FEMALE" | "MALE";
             preferredLanguages: ("EN" | "FR" | "RW" | "SW")[];
             address: components["schemas"]["ServiceAddressView"];
+            /** @description Null when the service didn't ask about the home */
+            household: components["schemas"]["HouseholdView"] | null;
             quote: components["schemas"]["QuoteView"] | null;
             adjustmentNote: string | null;
             cancellationReason: string | null;
@@ -1844,6 +1960,8 @@ export interface components {
             preferredGender: "ANY" | "FEMALE" | "MALE";
             preferredLanguages: ("EN" | "FR" | "RW" | "SW")[];
             address: components["schemas"]["ServiceAddressView"];
+            /** @description Null when the service didn't ask about the home */
+            household: components["schemas"]["HouseholdView"] | null;
             quote: components["schemas"]["QuoteView"] | null;
             adjustmentNote: string | null;
             cancellationReason: string | null;
@@ -1926,19 +2044,26 @@ export interface components {
             workerId?: string;
         };
         InitiatePaymentDto: {
-            /** @description MTN Mobile Money number, e.g. 078 123 4567 */
-            msisdn: string;
+            /**
+             * @description MTN_MOMO when left out; WALLET pays from the client's wallet balance at once
+             * @enum {string}
+             */
+            method?: "MTN_MOMO" | "WALLET";
+            /** @description MTN Mobile Money number, e.g. 078 123 4567; required unless paying from the wallet */
+            msisdn?: string;
         };
         PaymentView: {
             /** @enum {string} */
             status: "PENDING" | "SUCCESSFUL" | "FAILED";
+            /** @enum {string} */
+            method: "MTN_MOMO" | "WALLET";
             id: string;
             /** @description e.g. RC-10482; only meaningful once SUCCESSFUL */
             receiptReference: string;
             serviceRequestId: string;
             amountRwf: number;
-            /** @description e.g. 078 *** 4567 */
-            msisdnMasked: string;
+            /** @description e.g. 078 *** 4567; null for wallet payments */
+            msisdnMasked: string | null;
             failureReason: string | null;
             /** Format: date-time */
             createdAt: string;
@@ -1949,7 +2074,12 @@ export interface components {
             /** @enum {string} */
             kind: "PAYMENT" | "REFUND";
             /**
-             * @description Refunds go back to the payer's MoMo number: PENDING, then REFUNDED
+             * @description How it was paid, or where the refund went
+             * @enum {string}
+             */
+            method: "MTN_MOMO" | "WALLET";
+            /**
+             * @description MoMo refunds are PENDING, then REFUNDED; wallet refunds are REFUNDED at once
              * @enum {string}
              */
             status: "PENDING" | "SUCCESSFUL" | "FAILED" | "REFUNDED";
@@ -1970,6 +2100,53 @@ export interface components {
             monthPaymentCount: number;
             walletBalanceRwf: number;
             transactions: components["schemas"]["TransactionView"][];
+        };
+        WalletTopUpView: {
+            /** @enum {string} */
+            status: "PENDING" | "SUCCESSFUL" | "FAILED";
+            id: string;
+            amountRwf: number;
+            /** @description e.g. 078 *** 4567 */
+            msisdnMasked: string;
+            failureReason: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            completedAt: string | null;
+        };
+        ClientWalletEntryView: {
+            /** @enum {string} */
+            type: "TOP_UP" | "ADJUSTMENT" | "PAYMENT_DEBIT" | "REFUND_CREDIT";
+            id: string;
+            /** @description e.g. "Top-up from Mobile Money", "Payment for SR-1042" */
+            label: string;
+            /** @description Positive for money in, negative for money out */
+            amountRwf: number;
+            serviceRequestReference: string | null;
+            /** @description Ops credits: the reason given */
+            note: string | null;
+            /** @description Ops credits: who added it */
+            createdByName: string | null;
+            /** Format: date-time */
+            at: string;
+        };
+        ClientWalletView: {
+            balanceRwf: number;
+            /** @description Settings → Client wallet; when off, clients can't top up or pay from it */
+            enabled: boolean;
+            pendingTopUps: components["schemas"]["WalletTopUpView"][];
+            /** @description Newest first, up to 100 */
+            entries: components["schemas"]["ClientWalletEntryView"][];
+        };
+        StartTopUpDto: {
+            amountRwf: number;
+            /** @description MTN Mobile Money number to charge, e.g. 078 123 4567 */
+            msisdn: string;
+        };
+        WalletCreditDto: {
+            amountRwf: number;
+            /** @description Why, e.g. "Cash received at the office" */
+            note: string;
         };
         SubmitReviewDto: {
             /** @description "What stood out?" */
@@ -2066,6 +2243,7 @@ export interface components {
             emailVerified: boolean;
             phoneVerified: boolean;
             requestCount: number;
+            walletBalanceRwf: number;
             /** Format: date-time */
             createdAt: string;
         };
@@ -2086,6 +2264,7 @@ export interface components {
             emailVerified: boolean;
             phoneVerified: boolean;
             requestCount: number;
+            walletBalanceRwf: number;
             /** Format: date-time */
             createdAt: string;
             district: string | null;
@@ -2123,6 +2302,11 @@ export interface components {
             status: "PENDING" | "SUCCESSFUL" | "FAILED";
             /** @enum {string} */
             chargedTo: "ESCROW" | "PLATFORM";
+            /**
+             * @description Back the way it was paid
+             * @enum {string}
+             */
+            destination: "MOMO" | "WALLET";
             id: string;
             paymentId: string;
             serviceRequestId: string;
@@ -2130,8 +2314,8 @@ export interface components {
             clientName: string;
             amountRwf: number;
             reason: string;
-            /** @description e.g. 078 *** 4567 */
-            msisdnMasked: string;
+            /** @description e.g. 078 *** 4567; null for wallet refunds */
+            msisdnMasked: string | null;
             failureReason: string | null;
             ticketId: string | null;
             issuedByName: string;
@@ -3597,6 +3781,115 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentView"];
+                };
+            };
+        };
+    };
+    WalletController_view: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientWalletView"];
+                };
+            };
+        };
+    };
+    WalletController_topUp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartTopUpDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletTopUpView"];
+                };
+            };
+        };
+    };
+    WalletController_getTopUp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletTopUpView"];
+                };
+            };
+        };
+    };
+    AdminWalletController_view: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientWalletView"];
+                };
+            };
+        };
+    };
+    AdminWalletController_credit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WalletCreditDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientWalletView"];
                 };
             };
         };

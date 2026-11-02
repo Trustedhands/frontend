@@ -63,8 +63,11 @@ export function RefundPanel({
         )}
       </div>
       <p className="m-0 text-[13px] text-muted">
-        Sent back to the payer’s MoMo number. Before the worker is paid it comes out of their share
-        first; afterwards the platform covers it.
+        {r.payment?.method === 'WALLET'
+          ? 'Credited back to the client’s wallet straight away.'
+          : 'Sent back to the payer’s MoMo number.'}{' '}
+        Before the worker is paid it comes out of their share first; afterwards the platform covers
+        it.
       </p>
       <div className="grid grid-cols-[1fr_2fr] gap-2.5">
         <Field
@@ -87,7 +90,9 @@ export function RefundPanel({
         <Alert tone={refund.data.status === 'FAILED' ? 'danger' : 'success'}>
           {refund.data.status === 'FAILED'
             ? `Refund failed: ${refund.data.failureReason}`
-            : `Refund of ${formatRwf(refund.data.amountRwf)} sent to ${refund.data.msisdnMasked}. It shows as pending until MoMo confirms.`}
+            : refund.data.destination === 'WALLET'
+              ? `Refund of ${formatRwf(refund.data.amountRwf)} credited to the client’s wallet.`
+              : `Refund of ${formatRwf(refund.data.amountRwf)} sent to ${refund.data.msisdnMasked}. It shows as pending until MoMo confirms.`}
         </Alert>
       )}
       <Button

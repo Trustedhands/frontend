@@ -10,6 +10,7 @@ export const keys = {
   requests: (scope: 'active' | 'past') => ['requests', scope] as const,
   request: (id: string) => ['request', id] as const,
   payments: ['payments'] as const,
+  wallet: ['wallet'] as const,
   tickets: ['tickets'] as const,
   serviceTypes: ['service-types'] as const,
 };
@@ -41,6 +42,13 @@ export function usePaymentHistory() {
   return useQuery({
     queryKey: keys.payments,
     queryFn: () => unwrap(api.GET('/v1/payments')),
+  });
+}
+
+export function useWallet() {
+  return useQuery({
+    queryKey: keys.wallet,
+    queryFn: () => unwrap(api.GET('/v1/wallet')),
   });
 }
 

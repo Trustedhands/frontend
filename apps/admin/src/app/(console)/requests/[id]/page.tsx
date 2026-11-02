@@ -9,6 +9,7 @@ import {
   formatTime,
 } from '@trustedhands/ui/format';
 import type { AdminServiceRequestDetail } from '@trustedhands/api';
+import { describeAreas, describeHomeSize } from '@trustedhands/api/household';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { UserCheck } from 'lucide-react';
 import Link from 'next/link';
@@ -156,6 +157,12 @@ function RequestFacts({ request: r }: { request: AdminServiceRequestDetail }) {
         <Fact term="Address">
           {r.address.street}, {r.address.sector}, {r.address.district}
         </Fact>
+        {r.household && describeHomeSize(r.household) && (
+          <Fact term="Home">{describeHomeSize(r.household)}</Fact>
+        )}
+        {r.household && r.household.areas.length > 0 && (
+          <Fact term="Focus on">{describeAreas(r.household.areas)}</Fact>
+        )}
         <Fact term="Wants">{wantsLong(r.preferredGender, r.preferredLanguages)}</Fact>
       </dl>
       <p className="m-0 rounded-xl bg-paper px-3.5 py-3 text-sm leading-normal whitespace-pre-line">
@@ -173,6 +180,11 @@ function RequestFacts({ request: r }: { request: AdminServiceRequestDetail }) {
       )}
     </Panel>
   );
+}
+
+/** "21,000 RWF · RC-10482", noting wallet payments */
+function paidLine(p: NonNullable<AdminServiceRequestDetail['payment']>) {
+  return `${formatRwf(p.amountRwf)} · ${p.receiptReference}${p.method === 'WALLET' ? ' · from wallet' : ''}`;
 }
 
 function Fact({ term, children }: { term: string; children: ReactNode }) {
@@ -361,12 +373,7 @@ function ConfirmPanel({
   return (
     <Panel>
       <h2 className="m-0 text-[15px] font-bold">Confirm worker</h2>
-      <Row
-        label="Paid"
-        value={
-          r.payment ? `${formatRwf(r.payment.amountRwf)} · ${r.payment.receiptReference}` : '—'
-        }
-      />
+      <Row label="Paid" value={r.payment ? paidLine(r.payment) : '—'} />
       <p className="m-0 text-sm text-muted">
         Confirming tells the client who's coming. Brief the worker before the{' '}
         {r.kind === 'PLACEMENT' ? 'start date' : 'visit'}.
@@ -503,12 +510,7 @@ function AssignedWorker({ request: r }: { request: AdminServiceRequestDetail }) 
       ) : (
         <p className="m-0 text-sm text-muted">No worker on this request.</p>
       )}
-      {r.payment && (
-        <Row
-          label="Paid"
-          value={`${formatRwf(r.payment.amountRwf)} · ${r.payment.receiptReference}`}
-        />
-      )}
+      {r.payment && <Row label="Paid" value={paidLine(r.payment)} />}
       {r.review && (
         <Row
           label="Client rating"

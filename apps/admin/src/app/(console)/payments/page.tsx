@@ -491,7 +491,9 @@ function Refunds() {
                   >
                     {r.clientName} · {r.serviceRequestReference}
                   </Link>
-                  <div className="text-[13px] text-muted">To {r.msisdnMasked}</div>
+                  <div className="text-[13px] text-muted">
+                    {r.destination === 'WALLET' ? 'To their wallet' : `To ${r.msisdnMasked}`}
+                  </div>
                 </Td>
                 <Td className="text-right font-bold">{rwf(r.amountRwf)}</Td>
                 <Td className="max-w-[260px]">{r.reason}</Td>
