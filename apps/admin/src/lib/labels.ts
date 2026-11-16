@@ -1,5 +1,11 @@
 import type { BadgeTone } from '@trustedhands/ui';
-import type { Language, ServiceRequestStatus, StaffRole, WorkerStatus } from '@trustedhands/api';
+import type {
+  Language,
+  ReviewTag,
+  ServiceRequestStatus,
+  StaffRole,
+  WorkerStatus,
+} from '@trustedhands/api';
 
 /** Ops wording for request statuses (the design's pipeline language). */
 export const REQUEST_STATUS: Record<ServiceRequestStatus, { label: string; tone: BadgeTone }> = {
@@ -53,3 +59,12 @@ export function wantsLong(gender: 'ANY' | 'FEMALE' | 'MALE', languages: Language
     ...(languages.length ? [languages.map((l) => LANGUAGE_LABELS[l]).join(' or ')] : []),
   ].join(' · ');
 }
+
+/** "What stood out?" tags a client picks when rating a job. */
+export const REVIEW_TAGS: Record<ReviewTag, string> = {
+  ON_TIME: 'On time',
+  THOROUGH: 'Thorough',
+  FRIENDLY: 'Friendly',
+  RESPECTFUL: 'Respectful',
+  COMMUNICATED_WELL: 'Communicated well',
+};
