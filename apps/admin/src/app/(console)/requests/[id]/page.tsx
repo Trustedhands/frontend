@@ -20,7 +20,7 @@ import { dashboardKey } from '@/components/shell';
 import { RefundPanel } from '@/components/refund-panel';
 import { SuggestedWorkers } from '@/components/suggested-workers';
 import { api, ApiError, unwrap } from '@/lib/api';
-import { REQUEST_STATUS, wantsLong } from '@/lib/labels';
+import { REQUEST_STATUS, REVIEW_TAGS, wantsLong } from '@/lib/labels';
 import { requestTitle } from '@/lib/requests';
 import { useCan } from '@/lib/staff';
 
@@ -514,7 +514,13 @@ function AssignedWorker({ request: r }: { request: AdminServiceRequestDetail }) 
       {r.review && (
         <Row
           label="Client rating"
-          value={`${r.review.rating}/5${r.review.comment ? ` · “${r.review.comment}”` : ''}`}
+          value={[
+            `${r.review.rating}/5`,
+            r.review.tags.map((t) => REVIEW_TAGS[t]).join(', '),
+            r.review.comment && `“${r.review.comment}”`,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         />
       )}
     </Panel>

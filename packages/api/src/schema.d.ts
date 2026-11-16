@@ -1934,6 +1934,10 @@ export interface components {
              * @description When the client was last reminded to pay
              */
             remindedAt: string | null;
+            /** Format: date-time */
+            completedAt: string | null;
+            /** @description The client's star rating (1–5), once they've reviewed the job */
+            rating: number | null;
         };
         AdminServiceRequestPage: {
             items: components["schemas"]["AdminServiceRequestSummaryView"][];

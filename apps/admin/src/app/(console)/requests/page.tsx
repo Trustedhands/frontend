@@ -6,7 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { CalendarClock } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { ErrorNote, PageHeader } from '@/components/page';
+import { CompletedJobs } from '@/components/completed-jobs';
+import { ErrorNote, PageHeader, Tabs } from '@/components/page';
 import { api, unwrap } from '@/lib/api';
 import { clientName, requestTitle, requestWhen, workerTag } from '@/lib/requests';
 
@@ -18,7 +19,10 @@ const COLUMNS: Record<PipelineColumn['key'], { name: string; hint: string }> = {
   IN_PROGRESS: { name: 'In progress', hint: 'Closes when client confirms' },
 };
 
+type View = 'board' | 'completed';
+
 export default function RequestsPage() {
+  const [view, setView] = useState<View>('board');
   const [category, setCategory] = useState('');
   // Any date by default, so nothing waiting on ops is hidden
   const [days, setDays] = useState('');
@@ -37,47 +41,66 @@ export default function RequestsPage() {
         }),
       ),
     refetchInterval: 60_000,
+    enabled: view === 'board',
   });
 
   return (
     <>
       <PageHeader
         title="Requests"
-        subtitle="Every request moves left to right. Price and hold a worker first, then confirm once the client pays."
+        subtitle={
+          view === 'board'
+            ? 'Every request moves left to right. Price and hold a worker first, then confirm once the client pays.'
+            : 'Jobs the client has confirmed as done, newest first, with their rating.'
+        }
         actions={
-          <>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
-              Service
-              <Select
-                className="h-[42px] min-w-[160px] rounded-[10px] text-sm"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="">All services</option>
-                {services.data?.map((s) => (
-                  <option key={s.key} value={s.key}>
-                    {s.label}
-                  </option>
-                ))}
-              </Select>
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
-              Date
-              <Select
-                className="h-[42px] min-w-[200px] rounded-[10px] text-sm"
-                value={days}
-                onChange={(e) => setDays(e.target.value)}
-              >
-                <option value="">Any date</option>
-                <option value="7">Within 7 days of today</option>
-                <option value="30">Within 30 days of today</option>
-              </Select>
-            </label>
-          </>
+          view === 'board' && (
+            <>
+              <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
+                Service
+                <Select
+                  className="h-[42px] min-w-[160px] rounded-[10px] text-sm"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  <option value="">All services</option>
+                  {services.data?.map((s) => (
+                    <option key={s.key} value={s.key}>
+                      {s.label}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
+                Date
+                <Select
+                  className="h-[42px] min-w-[200px] rounded-[10px] text-sm"
+                  value={days}
+                  onChange={(e) => setDays(e.target.value)}
+                >
+                  <option value="">Any date</option>
+                  <option value="7">Within 7 days of today</option>
+                  <option value="30">Within 30 days of today</option>
+                </Select>
+              </label>
+            </>
+          )
         }
       />
-      {pipeline.error && <ErrorNote error={pipeline.error} />}
-      {!pipeline.data ? (
+      <Tabs
+        label="Requests view"
+        value={view}
+        onChange={setView}
+        options={[
+          { value: 'board', label: 'Open requests' },
+          { value: 'completed', label: 'Completed' },
+        ]}
+      />
+      {view === 'completed' ? (
+        <CompletedJobs />
+      ) : pipeline.error ? (
+        <ErrorNote error={pipeline.error} />
+      ) : !pipeline.data ? (
         <Spinner />
       ) : (
         <div className="relative overflow-x-auto pb-2">
