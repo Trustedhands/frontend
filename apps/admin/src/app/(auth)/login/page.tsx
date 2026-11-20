@@ -2,6 +2,7 @@
 
 import { Alert, Button, Field, Input } from '@trustedhands/ui';
 import { useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
 import { AuthCard } from '@/components/auth-card';
@@ -89,9 +90,12 @@ function Login() {
         <Button type="submit" loading={busy}>
           Sign in
         </Button>
-        <p className="m-0 text-center text-[13px] text-muted">
-          Forgot your password? Reset it from the TrustedHands app login, then sign in here.
-        </p>
+        <Link
+          href={`/reset-password${email.trim() ? `?email=${encodeURIComponent(email.trim())}` : ''}`}
+          className="text-center text-[13px] font-bold text-cta"
+        >
+          Forgot password?
+        </Link>
       </form>
     </AuthCard>
   );
