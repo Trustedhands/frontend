@@ -2,12 +2,24 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { watchIdle } from './idle';
 import type { Session, SessionState, SessionStatus } from './store';
 
 const SERVER_STATE: SessionState = { status: 'loading', accessToken: null, expiresAt: 0 };
 
-/** Restores the session on load and clears cached data when signing out. */
-export function SessionProvider({ session, children }: { session: Session; children: ReactNode }) {
+/**
+ * Restores the session on load and clears cached data when signing out.
+ * With `idleTimeoutMs`, signs out after that long without activity.
+ */
+export function SessionProvider({
+  session,
+  idleTimeoutMs,
+  children,
+}: {
+  session: Session;
+  idleTimeoutMs?: number;
+  children: ReactNode;
+}) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -20,6 +32,29 @@ export function SessionProvider({ session, children }: { session: Session; child
       previous = next;
     });
   }, [queryClient, session]);
+
+  useEffect(() => {
+    if (!idleTimeoutMs) return;
+    let previous = session.getState().status;
+    let stop: (() => void) | undefined;
+    const sync = () => {
+      const status = session.getState().status;
+      if (status === 'authenticated' && !stop) {
+        // Signing in starts a fresh clock; restoring on load keeps the stored one
+        stop = watchIdle(session, idleTimeoutMs, { freshSignIn: previous === 'anonymous' });
+      } else if (status !== 'authenticated' && stop) {
+        stop();
+        stop = undefined;
+      }
+      previous = status;
+    };
+    sync();
+    const unsubscribe = session.subscribe(sync);
+    return () => {
+      unsubscribe();
+      stop?.();
+    };
+  }, [idleTimeoutMs, session]);
 
   return <>{children}</>;
 }

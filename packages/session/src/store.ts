@@ -15,12 +15,19 @@ export interface SessionState {
   accessToken: string | null;
   /** Epoch ms when the access token expires */
   expiresAt: number;
+  /** Why the last session ended, when it wasn't the user's choice */
+  endReason?: 'idle';
 }
 
 /** Refresh this long before expiry so requests never carry a stale token */
 const REFRESH_MARGIN_MS = 60_000;
 
-const signedOut = (): SessionState => ({ status: 'anonymous', accessToken: null, expiresAt: 0 });
+const signedOut = (endReason?: 'idle'): SessionState => ({
+  status: 'anonymous',
+  accessToken: null,
+  expiresAt: 0,
+  ...(endReason && { endReason }),
+});
 
 export type Session = ReturnType<typeof createSession>;
 
@@ -56,6 +63,8 @@ export function createSession(options: { apiUrl: string; app: SessionApp }) {
     /** Pass to auth calls (`params: { query: session.query }`) so they use this app's cookie. */
     query: { app: options.app },
 
+    app: options.app,
+
     subscribe(listener: () => void) {
       listeners.add(listener);
       return () => {
@@ -74,7 +83,8 @@ export function createSession(options: { apiUrl: string; app: SessionApp }) {
       });
     },
 
-    async signOut() {
+    /** Pass `'idle'` when signing out for inactivity, so the login page can say why. */
+    async signOut(reason?: 'idle') {
       try {
         await fetch(`${options.apiUrl}/v1/auth/logout${query}`, {
           method: 'POST',
@@ -83,7 +93,7 @@ export function createSession(options: { apiUrl: string; app: SessionApp }) {
       } catch {
         // Offline: the cookie stays, but this tab forgets the session
       }
-      update(signedOut());
+      update(signedOut(reason));
     },
 
     /**

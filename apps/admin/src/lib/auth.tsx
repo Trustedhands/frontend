@@ -4,8 +4,15 @@ import { SessionProvider, useSessionStatus, type SessionStatus } from '@trustedh
 import type { ReactNode } from 'react';
 import { session } from './session';
 
+/** Sign out after 20 minutes without activity */
+const IDLE_TIMEOUT_MS = 20 * 60_000;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  return <SessionProvider session={session}>{children}</SessionProvider>;
+  return (
+    <SessionProvider session={session} idleTimeoutMs={IDLE_TIMEOUT_MS}>
+      {children}
+    </SessionProvider>
+  );
 }
 
 export function useAuth(): { status: SessionStatus } {

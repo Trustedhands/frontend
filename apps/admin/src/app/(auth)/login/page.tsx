@@ -68,6 +68,11 @@ function Login() {
   return (
     <AuthCard title="Sign in" lead="For the TrustedHands operations team.">
       <form onSubmit={submit} className="flex flex-col gap-4">
+        {params.get('idle') && !error && (
+          <Alert tone="warn">
+            You were signed out after 20 minutes of inactivity. Sign in again to continue.
+          </Alert>
+        )}
         <Field label="Work email">
           <Input
             type="email"

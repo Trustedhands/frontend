@@ -27,7 +27,8 @@ function safeNext(next: string | null): string {
 function LoginForm() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const next = safeNext(useSearchParams().get('next'));
+  const params = useSearchParams();
+  const next = safeNext(params.get('next'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +64,11 @@ function LoginForm() {
       <BrandLockup />
       <Heading title="Welcome back" lead="Log in to manage your requests and payments." />
       <form onSubmit={submit} className="flex flex-1 flex-col gap-[22px]">
+        {params.get('idle') && !error && (
+          <Alert tone="warn">
+            You were signed out after 20 minutes of inactivity. Log in again to continue.
+          </Alert>
+        )}
         <div className="flex flex-col gap-3.5">
           <Field label="Email">
             <Input

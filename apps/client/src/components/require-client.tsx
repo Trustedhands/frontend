@@ -6,6 +6,7 @@ import { useEffect, type ReactNode } from 'react';
 import { Landing } from '@/components/landing';
 import { useAuth } from '@/lib/auth';
 import { onboardingStep, useMe } from '@/lib/queries';
+import { session } from '@/lib/session';
 
 /**
  * Renders children only for a signed-in client who has finished sign-up.
@@ -16,11 +17,13 @@ export function RequireClient({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { status } = useAuth();
   const me = useMe();
-  const landing = status === 'anonymous' && pathname === '/';
+  // Signed out for inactivity: go to login, which says why, even from the home page
+  const idle = status === 'anonymous' && session.getState().endReason === 'idle';
+  const landing = status === 'anonymous' && pathname === '/' && !idle;
   const redirect = landing
     ? null
     : status === 'anonymous'
-      ? `/login?next=${encodeURIComponent(pathname)}`
+      ? `/login?next=${encodeURIComponent(pathname)}${idle ? '&idle=1' : ''}`
       : me.data
         ? onboardingStep(me.data)
         : null;

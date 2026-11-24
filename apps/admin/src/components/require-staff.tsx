@@ -17,7 +17,9 @@ export function RequireStaff({ children }: { children: ReactNode }) {
   const notStaff = me.error instanceof ApiError && me.error.status === 403;
 
   useEffect(() => {
-    if (status === 'anonymous') router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    if (status !== 'anonymous') return;
+    const idle = session.getState().endReason === 'idle' ? '&idle=1' : '';
+    router.replace(`/login?next=${encodeURIComponent(pathname)}${idle}`);
   }, [status, pathname, router]);
 
   useEffect(() => {
